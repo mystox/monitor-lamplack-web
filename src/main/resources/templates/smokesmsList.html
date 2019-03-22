@@ -1,0 +1,194 @@
+
+
+
+
+
+
+
+
+
+<!-- 1###-->
+
+
+
+<html>
+<head>
+    <title>短信信息</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+    <!-- required-->
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/jquery-ui-custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/grid.locale-cn.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/jquery.jqGrid.js" type="text/javascript"></script>
+
+    <!-- optional -->
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/lhgcalendar/lhgcalendar.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/date/WdatePicker.js" type="text/javascript"></script>
+
+    <link href="/realbowjc/static/ligerui/css/ligerui-all.css" rel="stylesheet" type="text/css" />
+    <script src="/realbowjc/static/ligerui/ligerui.all.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var row = '20,30,50,100'.split(",");
+        var def = '20';
+
+        $(window).load({name:'#list'}, RealJs.gridResize120);
+        $(function() {
+
+            var datefmt ='yyyy-MM-dd';
+            var maxdate ='%y-%M-{%d}';
+
+            $("#beginDate").focus(function(){
+                WdatePicker({skin:'whyGreen',dateFmt: datefmt,maxDate:'#F{$dp.$D(\'endDate\')}',isShowWeek:true});
+                searchBtnClick();
+            });
+
+            $("#endDate").focus(function(){
+                WdatePicker({skin:'whyGreen',dateFmt: datefmt,minDate:'#F{$dp.$D(\'beginDate\')}',maxDate:maxdate,isShowWeek:true});
+                searchBtnClick();
+            });
+
+            $(window).resize({name:'#list'}, RealJs.gridResize120);
+            $("#searchBtn").click(RealJs.clickSelectBtn);
+            //$("#btnAdd").click(RealJs.openModal);	//新增
+            $("#btnDelete").click(RealJs.deleteBatch);	//批量删除
+
+
+            //导出
+            $("#btnExport").click(function(ev){
+                ev.preventDefault();
+                var target = $(this).attr("href");
+                $("#searchForm").attr("action", target);
+                $("#searchForm").attr("target", "_blank");
+
+                $("#searchForm input").each(function(){
+                    RealJs.clearTip(this)
+                });
+
+                $("#searchForm").submit();
+
+                $("#searchForm input").each(function(){
+                    RealJs.showTip(this);
+                });
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+<div style="height: 50px;" class="iframetop_bg">
+    <div style="float: left; line-height: 50px; height: 50px;">
+        <label class="queryLabel">查询条件：</label>
+        <form id="searchForm" class="form-horizontal">
+            <!-- 2### -->
+            <input name="name" class="form-control" defaultValue="企业名称" value="企业名称" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+            <input name="mn" class="form-control" defaultValue="MN号" value="MN号" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+            <input name="mobiles" class="form-control" defaultValue="电话号码" value="电话号码" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+
+            <label class="queryLabel">日期：</label>
+            <input id="beginDate" name="beginDate" class="date-controldate" style="width:100px;"title="开始日期" value="2019-03-17" />&nbsp;--
+            <input id="endDate" name="endDate" class="date-controldate" style="width:100px;"title="结束日期" value="2019-03-23" />
+        </form>
+        <button class="btn btn-info" id="searchBtn">查 询</button>
+    </div >
+    <div class="topText">
+
+
+        <button id="btnExport" class="btn btn-primary" href="/realbowjc/smoke/info/smokesms/exportTotal">导出</button>
+    </div>
+</div>
+
+<div class="grid_table">
+    <table id="list"></table>
+    <div id="pager"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content1"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // 3###的选项是你需要修改的
+    $("#list").jqGrid({
+        colNames:['企业名称','MN','电话号码','时间','短信内容','操作'], //###数据列名称（数组）
+        colModel:[ 			//###数据列各参数信息设置
+            {name:'corp.corpName', width:100,align:'left', title:true},
+            {name:'monitor.mn', width:60,align:'center', title:true},
+            {name:'mobiles', width:60,align:'center', title:true},
+            {name:'createTime', width:50,align:'center', title:true,
+                formatter:function(value, options, rData){
+                    var timestamp = "";
+                    if(!isNaN(value) && value){//rData[7]表示日期列
+                        timestamp = (new Date(parseFloat(value))).format("yyyy-MM-dd hh:mm");
+                    }
+                    return timestamp;
+                }
+            },
+            {name:'content', width:210,align:'center', title:true},
+            {name:'operate', width:60, align:'center', sortable:false, title:false}
+
+        ],
+        sortname: 'createTime',  			//###排序字段名
+        sortorder: "asc", 				//###排序方式：倒序，本例中设置默认按id倒序排序
+        url:'/realbowjc/smoke/info/smokesms/getSmsPage',
+        gridComplete: function(){		//###修改操作按钮
+            var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+            //var corpCodes = $("#list").getCol("corpCode");
+
+            for(var i=0;i<ids.length;i++){
+                var cl = ids[i];
+                var operateStr="";
+                detail = "<a data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/info/smokesms/detail/" + ids[i] + "' data-toggle='modal' data-target='#myModal'>详情</a>"
+                if ( false ){
+                    edit = "<a data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/info/smokesms/edit/" + ids[i] + "' data-toggle='modal' data-target='#myModal'>修改</a>"
+                    operateStr=edit;
+                }
+                if ( false ){
+                    del = "<a type='delete' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/info/smokesms/delete/" + ids[i] + "'>删除</a>"
+                    operateStr = operateStr +"  " +del;
+                }
+                operateStr=operateStr +"  "+detail;
+
+                $("#list").jqGrid('setRowData', ids[i], {operate:operateStr});
+            }
+            $("a[data-target='#myModal']").click(RealJs.openModal);
+            $("a[type='delete']").click(RealJs.deleteOne);
+        },
+        sortable:true,  //可以排序
+        postData: $("#searchForm").formtojson(),
+        rowNum:def, //每页显示记录数
+        rowList:row, //分页选项，可以下拉选择每页显示记录数
+        pager:'#pager',  //表格数据关联的分页条，html元素
+        autowidth: true, //自动匹配宽度
+        height:275,   //设置高度
+        gridview:true, //加速显示
+        viewrecords: true,  //显示总记录数
+        multiselect: true,  //可多选，出现多选框
+        multiselectWidth: 25, //设置多选列宽度
+        repeatitems : false,
+        jsonReader:{
+            root: "content",            //json数据模型
+            total:"totalPages",             //数据总页码
+            records: "totalElements",       //数据总记录数
+            repeatitems : false //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+        },
+        mtype: 'POST',
+        datatype: "json",
+        loadComplete:RealJs.gridOnload
+    });
+</script>
+</body>
+</html>

@@ -171,6 +171,16 @@ public class TemplateController
     {
         return "warningDetail";
     }
+ /**
+     * 预警报警-报警短信记录
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/info/smokesms/main")
+    public String smokesmsMain()
+    {
+        return "smokesmsList";
+    }
 
 
 }
