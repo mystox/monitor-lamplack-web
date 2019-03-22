@@ -1,0 +1,7 @@
+span.error {
+	background: url("images/unchecked.gif") no-repeat 0px 0px;
+	font-size: 12px;
+	padding-bottom: 2px;
+	color: #E20000;
+
+}

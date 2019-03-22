@@ -1,0 +1,579 @@
+
+
+
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>广州正虹环境信息系统5.0版</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+<link rel="stylesheet" href="/realbowjc/waterStatic/css/ligerUI/ligerui-all.css" />
+<link rel="stylesheet" href="/realbowjc/static/columnChooser/jquery-ui.min.css" />
+<link rel="stylesheet" href="/realbowjc/static/columnChooser/ui.multiselect.css" />
+<link rel="stylesheet" href="/realbowjc/static/columnChooser/ui.jqgrid.css" />
+
+<link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+
+<script type="text/javascript" src="/realbowjc/static/columnChooser/jquery-1.11.0.min.js" ></script>
+<script type="text/javascript" src="/realbowjc/static/columnChooser/jquery-ui.min.js" ></script>
+<script type="text/javascript" src="/realbowjc/static/columnChooser/ui.multiselect.js" ></script>
+<script type="text/javascript" src="/realbowjc/static/columnChooser/jquery.jqGrid.min.js" ></script>
+<script type="text/javascript" src="/realbowjc/static/columnChooser/grid.locale-cn.js" ></script>
+
+<script src="/realbowjc/static/Hightcharts/highcharts.js"></script>
+<script src="/realbowjc/static/Hightcharts/highcharts-3d.js"></script>
+<script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+
+<script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+<script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+<script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+<script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script> 
+<script src="/realbowjc/static/realbow/js/windowsize220.js" type="text/javascript"></script>
+
+<script type="text/javascript" src="/realbowjc/waterStatic/js/ligerUI/core/base.js"></script>
+
+<script type="text/javascript" src="/realbowjc/waterStatic/js/ligerUI/plugins/ligerDialog.js"></script>
+<script type="text/javascript" src="/realbowjc/waterStatic/js/ligerUI/plugins/ligerResizable.js"></script>
+
+
+<script type="text/javascript">
+	var row = '20,30,50,100'.split(",");
+	var def = '20';
+
+	$(function() {
+		$("#btnColumnChooser").click(function(){
+			$("#list").jqGrid('columnChooser',{
+			    caption: "选择列",
+			    title: "Reorder Columns",
+			    dialog_opts: {  
+                            modal: true,  
+                            minWidth: 480,  
+                            height: 450,  
+                            show: 'blind',  
+                            hide: 'explode',  
+                            dividerLocation: 0.5  
+                        },
+			    done:function(perm){
+			    	if(perm){
+			    		this.jqGrid("remapColumns", perm, true);  
+                        var width = $(window).width();     
+                        $("#list").setGridWidth(width,true);
+                        
+			    	}
+			    }
+			});
+		});
+		
+		$("#searchBtn").click(function(){
+			var form = $("#searchForm");
+			var pageInput = $("#mypage");
+			pageInput.val("true");
+			
+			$("#list").jqGrid('setGridParam',{
+		        page:0 });
+			
+		    $("#list").jqGrid('setGridParam',{
+		        postData: $("#searchForm").formtojson()
+		    }).trigger("reloadGrid");
+		});	
+		$("a[data-target='#myModal']").click(RealJs.openModal);
+		$("button[data-target='#myModal']").click(RealJs.openModal);	//新增
+		
+	//=========================自动刷新=======================================================
+		init();  // 页面加载时执行倒计时
+		var refreshTime;  //定时间隔
+		var timeShow;  //显示时间
+		
+		function init(){
+			refreshSelect = $("#refreshTime"); //定时间隔选择控件
+			refreshTime = getRefeshTime();
+			
+			interval = setInterval(fun,1000*refreshTime); //页面刷新定时器
+			
+			timer = setInterval(fTimer,1000); // 时间间隔显示定时器
+		
+			--refreshTime;
+			timeShow = refreshTime;
+		    $("#refreshTimeSpan").text("距离刷新时间：" + changeTimeSpan());
+		}
+		
+		//定时执行函数，改变刷新时间显示
+		function fTimer()
+		{
+			--refreshTime;
+			timeShow = refreshTime;
+			$("#refreshTimeSpan").text("距离刷新时间：" + changeTimeSpan());
+			
+			if(refreshTime <= 0){
+				refreshTime = getRefeshTime();
+			}
+		}
+		
+		//改变刷新间隔时：清除原有定时器，按照新间隔时间重新生成
+		$("#refreshTime").change(function(){
+			--refreshTime
+			$("#refreshTimeSpan").text("距离刷新时间：" + changeTimeSpan());
+			
+			refreshTime = getRefeshTime();
+			clearInterval(interval);
+			
+			interval = setInterval(fun,1000*refreshTime);
+		});
+		
+		//定时执行函数，重新加载表格数据
+		function fun(){
+			$("#list").trigger("reloadGrid");
+		}
+		
+		//获取定时间隔
+		function getRefeshTime()
+		{
+			return parseFloat(refreshSelect.val());
+		}
+		
+		//改变倒计时间隔显示
+		function changeTimeSpan()
+		{
+			var min = "0";
+			var second = "00"
+			
+			if(timeShow > 0){
+				 var second = timeShow;
+			}else{
+				 second = "00";
+				 return min + "分" + second + "秒";
+			 }
+			
+			if(second>=60){
+				min = Math.floor(second/60);
+				second = second%60;
+			}
+			
+			if(second < 10){
+				return min+"分0"+second+"秒"
+			}
+
+			return min+"分"+second+"秒";
+		}
+		
+		
+		$("#stopBtn").click(function(){
+			var txt = $("#stopBtn").text();
+			if(txt == '停止监控'){
+				clearInterval(interval);
+				clearInterval(timer);
+				$("#stopBtn").text("开始监控");
+			}else{
+				init();
+				$("#stopBtn").text("停止监控");
+			}
+			
+		});
+		
+	//=========================Excel导出=======================================================
+		$("#btnExport").click(function(ev){
+			ev.preventDefault();
+			var target = $(this).attr("href");
+			$("#searchForm").attr("action", target);
+			$("#searchForm").attr("target", "_blank");
+			
+			$("#searchForm input").each(function(){
+				RealJs.clearTip(this);
+			});
+			
+			$("#dt").val(new Date());
+			
+			$("#searchForm").submit();
+			
+			$("#searchForm input").each(function(){
+				RealJs.showTip(this);
+			});
+		});	//导出
+	});
+	
+	//视频弹窗
+	function videoClick(corpId, corpName) {
+		//var systemCode = $("#systemCode").val();
+		$.ligerDialog.open({
+			title : corpName+' 视频监控',
+			url : '/realbowjc/smoke/realtime/tablemonitor/getVideo/'+corpId,
+			showMax : false,
+			showMin : false,
+			isResize : false,
+			slide : false,
+			height : 430,	
+			width : 612,
+		});
+	}
+	
+</script>
+
+</head>
+
+<body style="background: #fff;">
+	
+	
+		<!-- 浓度版 -->
+		<div style="height: 150px;" class="iframetop_bg">
+			<div style="height: 100px; float: left;">
+				<form id="searchForm" class="form-horizontal" style="float: left;">
+					<div style="line-height: 50px; height: 50px;">
+						<label class="queryLabel">查询条件：</label> <input name="corpCode"
+							class="form-control" style="width: 100px; display: none;"
+							defaultValue="企业编码" value="企业编码" onfocus="RealJs.clearTip(this)"
+							onblur="RealJs.showTip(this)" /> <input name="corpName"
+							class="form-control" style="width: 100px;" defaultValue="企业名称"
+							value="企业名称" onfocus="RealJs.clearTip(this)"
+							onblur="RealJs.showTip(this)" /> <input name="corpAddr"
+							class="form-control" style="width: 100px;" defaultValue="企业地址"
+							value="企业地址" onfocus="RealJs.clearTip(this)"
+							onblur="RealJs.showTip(this)" /> <input name="areaName"
+							class="form-control" style="width: 100px;"
+							defaultValue="所属区域"
+							value="所属区域"
+							onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+						<!-- 
+				<select name="fanStatus" class="form-control" style="width:100px" defaultValue="净化器状态" value="净化器状态" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)">
+					<option value="all">风机状态</option>
+					<option value="open">开</option>
+					<option value="close">关</option>
+					<option value="break">中断</option>
+				</select>
+				-->
+
+						<input id="dt" name="dt" type="hidden" value="4" /> <select
+							name="purStatus" class="form-control" style="width: 100px"
+							defaultValue="净化器状态" value="净化器状态"
+							onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)">
+							<option value="all">净化器状态</option>
+							<option value="open">开</option>
+							<option value="close">关</option>
+							<option value="break">中断</option>
+						</select>
+					</div>
+
+					<div style="margin-left: 15px; line-height: 50px; height: 50px;">
+						
+							<!-- 去除率小于等于查询条件 -->
+							<select name="purifyResult" class="form-control"
+								style="width: 88px" defaultValue="净化效能" value="净化效能"
+								onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)">
+								<option value="all">净化效能</option>
+								<option value="1good">优</option>
+								<option value="2general">良</option>
+								<option value="3bad">差</option>
+								<option value="0close">关闭</option>
+							</select>
+
+							<!-- 监测浓度值小于等于查询条件 -->
+							<span style="font-family: '微软雅黑'; font-size: 12px;">浓度值：</span>
+							<select id="" name="concentrationUnit" class="select-control"
+								style="width: 45px;">
+								<option value="0"><</option>
+								<option value="1">≤</option>
+							</select>
+							<input type="text" name="concentration" class="form-control"
+								style="width: 40px;" />
+							<!-- 新增单位百分号 -->
+							<span style="font-size: 12px; font-family: '微软雅黑';">mg/m³</span>
+
+							<!-- 去除率小于等于查询条件 -->
+							<!--<label style="width: 58px; font-family: '微软雅黑'; font-size: 12px;">去除率：</label>
+							<select id="" name="purifyPercentUnit" class="select-control"
+								style="width: 45px;">
+								<option value="0"><</option>
+								<option value="1">≤</option>
+							</select>
+							<input type="text" name="purifyPercent" class="form-control" style="width: 40px;" />-->
+							<!-- 新增单位百分号 -->
+							<!-- <label style="width: 10px; font-size: 12px; font-family: '微软雅黑';">%</label>-->
+						
+					</div>
+					<input name="pbind" type="hidden" value="true" /> <input
+						id="timeHidden" type="hidden" value="" />
+				</form>		
+				<button style="float: left; margin: 10px;" class="btn btn-info"
+							id="searchBtn">查 询</button>				
+			</div>
+
+			<div style="height: 50px; line-height: 50px; clear: left;">
+				<span id="refreshTimeSpan"
+					style="margin-left: 15px; font-size: 12px;">距离刷新时间：30秒</span> <select
+					id="refreshTime" class="select-control" style="width: 88px;">
+					<option value="30">30秒刷新</option>
+					<option value="20">20秒刷新</option>
+					<option value="10">10秒刷新</option>
+				</select>
+				<button id="stopBtn" class="btn btn-primary">停止监控</button>
+				
+					<button id="btnExport" class="btn btn-primary"
+						href="/realbowjc/smoke/realtime/tablemonitor/exportExcelJc">导 出</button>
+				
+				<button class="btn btn-primary" data-remote=""
+					href="/realbowjc/smoke/realtime/tablemonitor/pie" data-toggle="modal"
+					data-target="#myModal">图 表</button>
+				<input type="button" id="btnColumnChooser" class="btn btn-primary" value="选择列" />
+			</div>
+		</div>
+	
+	
+	<table id="list"></table>
+	<div id="pager"></div>
+
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+		aria-labelledby="myModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content1"></div>
+		</div>
+	</div>
+
+
+	<script type="text/javascript">
+	function formatStatus(value, options, rData){
+ 		if (value=='open')
+			return '<img src="/realbowjc/static/realbow/images/helpIcon/kaiqi0.png">';
+		else if (value=='close')
+			return '<img src="/realbowjc/static/realbow/images/helpIcon/close0.png">';
+		//如果风机和净化器都关闭使用睡觉图标,此值在 gridComplete 里面判断;	
+		else if(value=='close2') 
+			return '<img src="/realbowjc/static/realbow/images/helpIcon/greyface.png">';
+		else
+			return '<img src="/realbowjc/static/realbow/images/helpIcon/dataZD0.png">';
+	}
+	
+	function unformatImgName(value, options, rData){
+		var imgDir = "/realbowjc/static/realbow/images/helpIcon/";
+		var img = $('img', rData).attr('src').substr(imgDir.length);
+		if (img == 'kaiqi0.png')
+			return 'open';
+		else if(img == 'close0.png')
+			return 'close';
+		else if(img == 'greyface.png')
+			return 'close';
+		else if (img == 'dataZD0.png')
+			return 'break';
+		
+	}
+	
+	$("#list").jqGrid({
+		url:'/realbowjc/smoke/realtime/tablemonitor/page',  //请求数据的url地址
+		mtype: 'POST',
+		datatype: "json",  //请求的数据类型
+		colNames:['企业ID','企业编码', '企业名称','区域','地址','风机名称','风机状态','净化器名称','净化器状态', '净化效能','进口浓度(mg/m³)','出口浓度(mg/m³)','PM2.5(μg/m³)','去除率(%)','风机电流(A)','净化器电流(A)','GPS经度','GPS纬度','监测时间','净化器ID','风机ID','小时均值','视频'], //数据列名称（数组）
+		colModel:[ //数据列各参数信息设置
+		    {name:'monitor.smokeCorp.id',index:'monitor.smokeCorp.id',width:55,hidden:true,hidedlg:true},
+		    {name:'monitor.smokeCorp.corpCode',index:'monitor.smokeCorp.corpCode',width:55,hidden:true,hidedlg:true},
+			{name:'monitor.smokeCorp.corpName',index:'monitor.smokeCorp.corpName',
+				formatter:function(value, options, rData){
+					if(rData.realTimeEfficiency == "3bad"){
+						return "<span style='color:#ff0000;'>"+ value +"</span>";
+					}
+					return value;
+				}, width:150,align:'left',},
+			{name:'monitor.smokeCorp.area.areaName',index:'monitor.smokeCorp.area.areaName', width:50,align:'center'},
+			{name:'monitor.smokeCorp.address',index:'monitor.smokeCorp.address',
+				formatter:function(value, options, rData){
+             		var vLength = value.length;
+             		var srcValue = value;
+             		value = "<span title='"+ srcValue +"'>"+value+"</span>";
+             		return value;
+				},width:150,align:'left'},
+			{name:'fanDevice.deviceName',index:'purifierDevice.deviceName', width:70, align:'center'},
+			{name:'fanRealTimeStatus', index:'fanRealTimeStatus', formatter:formatStatus, unformat:unformatImgName, width:50, align:'center'},
+			{name:'purifierDevice.deviceName',index:'fanDevice.deviceName', width:70, align:'center'},
+			{name:'purifierRealTimeStatus',index:'purifierRealTimeStatus', formatter:formatStatus, unformat:unformatImgName, width:60, align:'center'},
+		    {name:'realTimeEfficiency',realTimeEfficiency:'price',
+	             	formatter:function(value, options, rData){
+	             		if (value=='1good')
+							return '<img src="/realbowjc/static/realbow/images/helpIcon/greenface0.png">';
+						else if (value=='2general')
+							return '<img src="/realbowjc/static/realbow/images/helpIcon/yellowface0.png">';
+						else if (value=='3bad')
+							return '<img src="/realbowjc/static/realbow/images/helpIcon/redface0.png">';
+						else if (value=='0close') 
+							return '<img src="/realbowjc/static/realbow/images/helpIcon/greyface.png">';
+						else
+							return '<img src="/realbowjc/static/realbow/images/helpIcon/dataZD0.png">';
+					}, width:50, align:'center'},
+			{name:'conc1',index:'conc1',
+						formatter:function(value, options, rData){
+							if(value==null || value=='' || rData.realTimeEfficiency == "6break" ){
+						   		return  "-";
+						   	}else if(rData.concentration!=null && rData.conc1!=null && rData.concentration>rData.conc1){
+								return "-"
+							}
+							return value.toFixed(2);
+					}, width:70, align:'center', hidden:false},
+			{name:'concentration',index:'concentration',
+				formatter:function(value, options, rData){
+					if(value == 0){
+						if(rData.realTimeEfficiency == "3bad" ){
+							return "<span style='color:#ff0000;'>0</span>";
+						}else{
+							return 0;
+						}
+					}else if(value==null || value==''){
+				   		return  "-";
+					}else if(rData.realTimeEfficiency == "3bad" ){
+						return "<span style='color:#ff0000;'>"+value.toFixed(2)+"</span>";
+					}else{
+						return value.toFixed(2);
+					}
+					}, width:90, align:'center', hidden:false},
+			{name:'pm25',index:'pm25', width:80, align:'center',
+					formatter:function(value, options, rData){
+						if(value == 0){
+							return 0;
+						}else if(value==null || value==''){
+						   	return  "-";
+						}else{
+							return value;
+						}
+					}
+			},
+			{name:'purifyPercent',index:'purifyPercent',
+					   formatter:function(value, options, rData){
+							if(value==null || value=='' )
+						   		return "-";
+							if(rData.fanRealTimeStatus != "open"){
+						   		return "-";
+							}
+							if(rData.concentration!=null && rData.conc1!=null && rData.concentration>rData.conc1){
+								return "-"
+							}
+							return value.toFixed(2);
+			          },width:50, align:'center', hidden:false },
+			{name:'fanValue',index:'fanValue', hidedlg:true,formatter:function(value, options, rData){
+				if(value==null)value = "-";
+					return value;
+				}, width:70, align:'center', hidden:true},
+			{name:'purifierValue',index:'purifierValue', hidedlg:true,formatter:function(value, options, rData){
+				if(value==null)value = "-";
+					return value;
+				}, width:70, align:'center', hidden:true},		
+			{name:'monitor.smokeCorp.lon',index:'gps', width:70, align:'center'},
+			{name:'monitor.smokeCorp.lat',index:'gps', width:70, align:'center'},
+			{name:'monitorTime',index:'monitorTime',
+                 	formatter:function(value, options, rData){
+						var timestamp = "";
+						if(!isNaN(value) && value){//rData[7]表示日期列
+					   		timestamp = (new Date(parseFloat(value))).format("yyyy-MM-dd hh:mm");
+						}
+						return timestamp;
+					}, width:100, align:'center'},
+			{name:'purifierDevice.id',index:'purifierDevice.id', width:80, align:'center', hidden:true, hidedlg:true},
+			{name:'fanDevice.id',index:'fanDevice.id', width:80, align:'center', hidden:true, hidedlg:true},
+			{name:'operate',index:'operate', width:70, align:'center'},
+			{name:'videoEnabled',index:'videoEnabled', formatter:function(value, options, rData){
+							if(value==null || value=='' || value == 'n'){
+								return "<span title='视频' style='padding-left:5px;'><img src='/realbowjc/static/realbow/img/videobg1.png' style='border:0px; vertical-align:middle;'/></span>";
+							}
+							if(value == "y"){
+								return "<span title='视频' onClick='videoClick(\""+rData.monitor.smokeCorp.id+"\",\""+rData.monitor.smokeCorp.corpName+"\")' style='cursor: pointer; padding-left:5px;'><img src='/realbowjc/static/realbow/img/videobg0.png' style='border:0px; vertical-align:middle;'/></span>";
+							}
+			          },width:70, align:'center'}],
+		gridComplete: function(){		//###
+	        var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+	        var corpCodes = $("#list").getCol("monitor.smokeCorp.corpCode");
+	        var corpNames = $("#list").getCol("monitor.smokeCorp.corpName");
+	        var corpIds = $("#list").getCol("monitor.smokeCorp.id");
+	        var fanIds = $("#list").getCol("fanDevice.id");
+	        var purIds = $("#list").getCol("purifierDevice.id");
+	        var fanNames = $("#list").getCol("fanDevice.deviceName");
+	        var purNames = $("#list").getCol("purifierDevice.deviceName");
+	        var monitorTimes = $("#list").getCol("monitorTime");
+	        for(var i=0;i<ids.length;i++){
+	            //var cl = ids[i];
+	            corp = "<a title='点击查看企业明细' data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/info/smokecorp/corpInfo/" + corpCodes[i] + "' data-toggle='modal' data-target='#myModal'>"+corpNames[i]+"</a>";
+	           
+	            //风机
+	            fun = "<a title='点击查看设备明细' data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/realtime/tablemonitor/device/" + fanIds[i] + "' data-toggle='modal' data-target='#myModal'>"+fanNames[i]+"</a>";
+	            
+	            //净化器
+	            pur = "<a title='点击查看设备明细' data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/realtime/tablemonitor/device/" + purIds[i] + "' data-toggle='modal' data-target='#myModal'>"+purNames[i]+"</a>";
+	            
+	            //小时浓度均值
+	            var concAvg = "<a title='点击查看小时均值' data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/realtime/tablemonitor/concHourAvg/"+corpIds[i]+"/"+monitorTimes[i].substring(0,10)+"' data-toggle='modal' data-target='#myModal'>图表</a>"
+	            if(monitorTimes[i]==null || monitorTimes[i]==""){
+	            	concAvg ="图表";
+	            }
+	            //pur = "";
+	            $("#list").jqGrid('setRowData', ids[i], {'monitor.smokeCorp.corpName':corp});
+	            $("#list").jqGrid('setRowData', ids[i], {'fanDevice.deviceName':fun});
+	            $("#list").jqGrid('setRowData', ids[i], {'purifierDevice.deviceName':pur});
+	            $("#list").jqGrid('setRowData', ids[i], {operate:concAvg});
+	            $("#list").jqGrid('setRowData', ids[i], {operate:concAvg});
+	        } 
+	        $("a[data-target='#myModal']").click(RealJs.openModal);
+	        $("a[type='delete']").click(RealJs.deleteOne);
+	        
+	        
+	      	//修改行背景颜色
+            var fanStatus = $("#list").getCol('fanRealTimeStatus');
+            var purStatus = $("#list").getCol('purifierRealTimeStatus');
+            var rowData = $("#list").jqGrid("getRowData");
+            for(i=0;i<fanStatus.length;i++){
+                if(fanStatus[i]=='open' && purStatus[i]=='close'){
+                	//alert($("#"+ids[i] + " tr"));
+	                $("#" + ids[i]).css("background", "#fff5af");
+                }
+                if(fanStatus[i]=='close' && purStatus[i]=='close'){
+                	 var close2='close2';
+                	 $("#list").jqGrid('setRowData', ids[i], {'fanRealTimeStatus':close2});
+                	 $("#list").jqGrid('setRowData', ids[i], {'purifierRealTimeStatus':close2});
+                }
+            }
+	    },
+	    shrinkToFit:true,
+	    forceFit:true,
+		postData: $("#searchForm").formtojson(),
+		rowNum:def, //每页显示记录数
+		rowList:row, //分页选项，可以下拉选择每页显示记录数
+		pager:'#pager',  //表格数据关联的分页条，html元素
+		autowidth: true, //自动匹配宽度
+		height:360,   //设置高度
+		gridview:true, //加速显示
+		viewrecords: true,  //显示总记录数
+		multiselect: false,  //可多选，出现多选框
+		multiselectWidth: 25, //设置多选列宽度
+		repeatitems : false,
+		sortable:true,  //可以排序
+		sortname: 'purifierRealTimeStatus',  //排序字段名
+		sortorder: "desc", //排序方式：倒序，本例中设置默认按id倒序排序
+		//rownumbers: true,
+		rownumWidth: 40,
+		jsonReader:{
+			root: "content",            	//json数据模型
+            total:"totalPages",             //数据总页码
+            records: "totalElements",       //数据总记录数
+			repeatitems : true //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+		},
+		loadComplete:function(data){ //完成服务器请求后，回调函数
+		},
+		onHeaderClick:function(){
+			if(true){
+				var t = "dd";
+				 t = '';
+				 
+				 if(t && t.age == 'dilething'){
+					 // do something in here
+					 
+					 // if the user's id is null,must to get parentId of this user
+				 }
+			}
+		}
+	});	
+	
+	$("#list").jqGrid('navGrid','#pcolch',{add:false,edit:false,del:false,search:false,refresh:false});
+    
+</script>
+
+	<div style="position: absolute; bottom: 8px; z-index:999; margin-left: 320px; font-size: 12px;">监控仪总数:21台,净化器总数:21台,
+		风机总数:21台</div>
+
+</body>
+</html>

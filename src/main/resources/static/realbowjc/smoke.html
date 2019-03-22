@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>油烟在线监控系统</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <link rel="shortcut icon" href="/realbowjc/static/realbow/images/favicon/zhkj.ico">
+    <link href="/realbowjc/static/ligerui/css/ligerui-all.css" rel="stylesheet" type="text/css"/>
+    <link href="/realbowjc/static/realbow/css/menustyle.css" rel="stylesheet" type="text/css"/>
+    <link href="/realbowjc/static/realbow/css/realbowHome.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css"/>
+    <link id="mylink" rel="stylesheet" type="text/css"/>
+    <!-- options -->
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery.form.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerui.all.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerTab.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerDialog.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/jquery.cookie.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/json2.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/indexdata.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+
+    <script src="/realbowjc/static/realbow/js/tipMessage.js" type="text/javascript"></script>
+
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+
+    <link rel="stylesheet" href="/realbowjc/static/realbow/css/myScrollbar/jquery.mCustomScrollbar.css"/>
+    <script type="text/javascript"
+            src="/realbowjc/static/realbow/css/myScrollbar/jquery.mCustomScrollbar.concat.min.js"></script>
+
+    <script>
+        var userName = '环保局账号';
+    </script>
+
+    <script type="text/javascript">
+
+        var canToBack = 'false';
+        var skin = 'greenskins'; //保存当前皮肤
+        var tab = null;
+        var accordion = null;
+        var tree = null;
+        var tabItems = [];
+
+        getNowSkin();
+
+        function openMenu(id, name, url) {
+            javascript:f_addTab(id, name, url);
+        }
+
+        function setNowSkin(paramSkin) {
+            skin = paramSkin;
+            location.reload();
+        }
+
+        function getNowSkin() {
+            $.ajax({
+                url: "/realbowjc/sysadmin/security/user/getnowskin",
+                type: 'POST',
+                async: false,
+                data: {
+                    userId: '40282c95518fbce30151af1d539c0e51'
+                },
+                success: function (r) {
+                    skin = r;
+                }
+            })
+        }
+
+        $(function () {
+            if (canToBack == 'false') {
+                document.getElementById('toBackLink').style.display = 'none';
+            }
+
+            loadShortcutMenu();
+            //布局
+            $("#layout1").ligerLayout({
+                leftWidth: 190,
+                height: '100%',
+                heightDiff: 2,
+                space: 0,
+                onHeightChanged: f_heightChanged
+            });
+
+            var height = $(".l-layout-center").height();
+
+            //Tab
+            $("#framecenter").ligerTab({
+                height: height,
+                showSwitchInTab: true,
+                showSwitch: true,
+                onAfterAddTabItem: function (tabdata) {
+                    tabItems.push(tabdata);
+                    saveTabStatus();
+                },
+                onAfterRemoveTabItem: function (tabid) {
+                    for (var i = 0; i < tabItems.length; i++) {
+                        var o = tabItems[i];
+                        if (o.tabid == tabid) {
+                            tabItems.splice(i, 1);
+                            saveTabStatus();
+                            break;
+                        }
+                    }
+                },
+                onReload: function (tabdata) {
+                    var tabid = tabdata.tabid;
+                    addFrameSkinLink(tabid);
+                }
+            });
+
+            //面板
+            $("#accordion1").ligerAccordion({
+                height: height - 24,
+                speed: null
+            });
+
+            $(".l-link").hover(function () {
+                $(this).addClass("l-link-over");
+            }, function () {
+                $(this).removeClass("l-link-over");
+            });
+            //树
+            $("#tree1").ligerTree({
+                data: indexdata,
+                checkbox: false,
+                slide: false,
+                nodeWidth: 80,
+                attribute: ['nodename', 'url'],
+                onSelect: function (node) {
+                    if (!node.data.url)
+                        return;
+                    var tabid = $(node.target).attr("tabid");
+                    if (!tabid) {
+                        tabid = new Date().getTime();
+                        $(node.target).attr("tabid", tabid)
+                    }
+                    f_addTab(tabid, node.data.text, node.data.url);
+                }
+            });
+
+            tab = liger.get("framecenter");
+            accordion = liger.get("accordion1");
+            tree = liger.get("tree1");
+            $("#pageloading").hide();
+
+            clear_cookie(); //clear ligerui cookie
+
+            var css = $("#mylink").get(0);
+            $(css).attr("href", skin_links[skin]); //设置用户皮肤
+        });
+
+        function f_heightChanged(options) {
+            if (tab)
+                tab.addHeight(options.diff);
+            if (accordion && options.middleHeight - 24 > 0)
+                accordion.setHeight(options.middleHeight - 24);
+        }
+
+        function f_addTab(tabid, text, url) {
+            var tabJson = $.cookie('liger-home-tab');
+            if (tabJson) {
+                var tabitems = JSON2.parse(tabJson);
+                if (tabitems.length >= 9) {
+                    $.ligerDialog.warn('您同时打开标签数目达到上限,请您关闭标签！');
+                    //alert("您同时打开标签数目达到上限,请您关闭标签！");
+                    return;
+                }
+            }
+            tab.addTabItem({
+                tabid: tabid,
+                text: text,
+                url: url,
+                callback: function () {
+                    /* addShowCodeBtn(tabid); */
+                    addFrameSkinLink(tabid);
+                }
+            });
+        }
+
+        function f_removeTab(tabid) {
+            tab.removeTabItem(tabid);
+        }
+
+        function f_flushTab(tabId) {
+            tab.reload(tabId);
+        }
+
+        function addFrameSkinLink(tabid) {
+            var prevHref = getLinkPrevHref(tabid) || "";
+            attachLinkToFrame(tabid, prevHref + skin_links[skin]);
+        }
+
+        var skin_links = {
+            "blueskins": "",
+            "greenskins": "/realbowjc/static/greenSkins/css/greenSkinsAll.css"
+        };
+
+        $(function () {
+            $("#green").click(function () {
+                var css = $("#mylink").get(0);
+            });
+        });
+
+        function clear_cookie() {
+            $.cookie('liger-home-tab', '');
+        }
+
+        function reloadTabItem() {
+            var tabJson = $.cookie('liger-home-tab'); //temp cookie variable
+            tab.removeAll();
+            $.cookie('liger-home-tab', '');
+
+            if (tabJson) {
+                var tabitems = JSON2.parse(tabJson);
+                for (var i = 0; tabitems && tabitems[i]; i++) {
+                    f_addTab(tabitems[i].tabid, tabitems[i].text, tabitems[i].url);
+                }
+            }
+        }
+
+        function saveTabStatus() {
+            $.cookie('liger-home-tab', JSON2.stringify(tabItems));
+        }
+
+        function getQueryString(name) {
+            var now_url = document.location.search.slice(1), q_array = now_url
+                .split('&');
+            for (var i = 0; i < q_array.length; i++) {
+                var v_array = q_array[i].split('=');
+                if (v_array[0] == name) {
+                    return v_array[1];
+                }
+            }
+            return false;
+        }
+
+        function attachLinkToFrame(iframeId, filename) {
+            if (!window.frames[iframeId])
+                return;
+            var head = window.frames[iframeId].document
+                .getElementsByTagName('head').item(0);
+            var fileref = window.frames[iframeId].document.createElement("link");
+            if (!fileref)
+                return;
+            fileref.setAttribute("rel", "stylesheet");
+            fileref.setAttribute("type", "text/css");
+            fileref.setAttribute("href", filename);
+
+            head.appendChild(fileref);
+        }
+
+        function getLinkPrevHref(iframeId) {
+            if (!window.frames[iframeId])
+                return;
+            var head = window.frames[iframeId].document
+                .getElementsByTagName('head').item(0);
+            var links = $("link:first", head);
+            for (var i = 0; links[i]; i++) {
+                var href = $(links[i]).attr("href");
+                if (href && href.toLowerCase().indexOf("greenskins") > 0) {
+                    return href.substring(0, href.toLowerCase().indexOf("static"));
+                }
+            }
+        }
+
+        // 菜单脚本
+        $(document)
+            .ready(
+                function () {
+                    // Store variables
+                    var accordion_head = $('.accordion > li > a'), accordion_body = $('.sub-menu');
+                    // Open the first tab on load
+                    accordion_head.first().addClass('active').next()
+                        .slideDown('normal');
+                    // Click function
+                    accordion_head.on('click', function (event) {
+                        var menuCount = $(this).next(".sub-menu").children().length;
+                        if (menuCount == 1) {
+
+                            /* $(this).next(".subMenu").children().children().click(); */
+                            var subMenuHref = $(this).next(".sub-menu").children().children().attr("href");
+                            $(this).attr("href", subMenuHref);
+                            $(this).next(".sub-menu").children().css("display", "none");
+                        }
+
+                        // Disable header links
+                        //event.preventDefault();
+                        // Show and hide the tabs on click
+                        if ($(this).attr('class') != 'active') {
+                            accordion_body.slideUp('normal');
+                            $(this).next().stop(true, true).slideToggle(
+                                'normal');
+                            accordion_head.removeClass('active');
+                            $(this).addClass('active');
+                        } else if ($(this).attr('class') == 'active') {
+                            $(this).next().stop(true, true).slideToggle(
+                                'normal');
+                        }
+                    });
+                    $("#pageloading").hide();
+
+                });
+    </script>
+
+    <script language="javascript">
+        function scrollTitle(changeSpeed, scrollSpeed) {
+            var con = document.getElementById("list_con");
+            var list = document.getElementById("news_list");
+            list.innerHTML += list.innerHTML;
+            var items = list.getElementsByTagName("li");
+            var timer_1 = setInterval(_scrollTitle, changeSpeed);
+            var heightAll = 0;
+            for (var i = 0; i < items.length; i++) {
+                heightAll += items[i].offsetHeight;
+            }
+            var heightHalf = parseInt(heightAll / 2);
+            con.onmouseover = function () {
+                if (timer_1) {
+                    clearInterval(timer_1);
+                    timer_1 = null;
+                }
+            }
+            con.onmouseout = function () {
+                if (timer_1) {
+                    clearInterval(timer_1);
+                    timer_1 = null;
+                }
+                timer_1 = setInterval(_scrollTitle, changeSpeed);
+            }
+
+            function _scrollTitle() {
+                var timer;
+                var num = 45;
+                timer = setInterval(scrollTop, scrollSpeed);
+
+                function scrollTop() {
+                    if (con.scrollTop < heightHalf) {
+                        con.scrollTop += 3;
+                        num -= 3;
+                    } else {
+                        con.scrollTop = 0;
+                    }
+                    if (num <= 0) {
+                        clearInterval(timer);
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $(".helpImg").click(function () {
+                $("#helpBox").stop().slideToggle("slow");
+            });
+
+            /*
+            $(".oaOffice").click(function(){
+                $.ligerDialog.warn('对不起，OA站正在建设中...');
+            });
+            */
+
+            $("#btnSZMenu").click(RealJs.openModal);
+            $("#btnUpdatePassword").click(RealJs.openModal);
+            $("#setEarlyWarning").click(RealJs.openModal);
+            $("#btnSetSkins").click(RealJs.openModal);
+        });
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#btnsetup").click(function () {
+                $(".showPlat1").stop().slideToggle("slow");
+                $(".showPlat2").css("display", "none");
+            });
+
+            $("#plLink").click(function () {
+                $(".showPlat2").stop().slideToggle("slow");
+                $(".showPlat1").css("display", "none");
+            });
+
+            $("#logout").click(RealJs.btnLogOut);
+
+            var expire = false;
+            if (expire)
+                $.ligerDialog.warn("密码超过设置期限，请修改密码！");
+        });
+    </script>
+
+    <style type="text/css">
+        .arrow-up {
+            width: 0;
+            height: 0;
+            display: block;
+            position: relative;
+            left: 250px;
+            border: 8px solid transparent;
+            border-bottom: 8px solid #189ad0;
+            overflow: hidden;
+        }
+
+        .backplat {
+            background: #189ad0;
+            /*width: 158px;*/
+            height: 50px;
+            line-height: 50px;
+            margin: 0;
+            padding: 3px;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+            box-shadow: 1px 1px 5px #0066CC;
+            -webkit-box-shadow: 1px 1px 5px #0066CC;
+            -moz-box-shadow: 1px 1px 5px #0066CC;
+            -o-box-shadow: 1px 1px 5px #0066CC;
+        }
+
+        .backplat ul li {
+            float: left;
+            line-height: 50px;
+            height: 50px;
+            font-family: "微软雅黑";
+            color: #FFFCC7;
+            cursor: pointer;
+        }
+
+        .backplat1 {
+            background: #189ad0;
+            /*width: 158px;*/
+            height: 50px;
+            line-height: 50px;
+            margin: 0;
+            padding: 3px;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+            box-shadow: 1px 1px 5px #0066CC;
+            -webkit-box-shadow: 1px 1px 5px #0066CC;
+            -moz-box-shadow: 1px 1px 5px #0066CC;
+            -o-box-shadow: 1px 1px 5px #0066CC;
+        }
+
+        .backplat1 ul li {
+            float: left;
+            line-height: 40px;
+            height: 50px;
+            font-family: "微软雅黑";
+            color: #FFFCC7;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body style="padding: 0px; background: #EAEEF5;">
+<div id="pageloading"></div>
+<!-- 框架top -->
+<div>
+
+    <div id="topmenu" class="l-topmenu">
+        <!-- 登录信息 -->
+        <!--             <a href="javascript:f_addTab('4028d04746b6a9250146b6d88fed0003','运维任务管理','operate/operatetask/main')" title="待办任务"><img src="static/realbow/images/DaiBanRenWu002.png"/></a> -->
+        <div class="topAdmin">
+            <a title="个人设置" id="btnsetup" style="cursor: pointer;"><img src="static/realbow/images/SetUpShortcut1.png"/></a>
+            <a id="toBackLink" title="前往后台" type="button" href="/realbowjc/back">
+                <img src="/realbowjc/static/realbow/images/shortcutIcon/BackIcons001.png"/></a>
+            <a id="plLink" title="其它监控平台" style="display:none; cursor:pointer;"><img
+                    src="static/realbow/images/shortcutIcon/FrontIcons001.png"/></a>
+            <a title="退出系统" id="logout"
+               href="/realbowjc/logout"><img src="static/realbow/images/exitSystemIcons0.png"/></a><a
+                class="helpImg"><img
+                src="static/realbow/images/ShortcutHelp_icons003.png"/></a>
+        </div>
+        <!--  ==========================   快捷菜单     ================================   -->
+        <div class="topShortcut">
+            <script type="text/javascript">
+                function loadShortcutMenu() {
+                    $.post(
+                        "/realbowjc/getshortmenu/smoke",
+                        {id: "40282c95518fbce30151af1d539c0e51"},
+                        function (data) {
+                            var smJson = $(data);
+                            var str = "";
+
+                            for (var i = 0; i < smJson.length; i++) {
+                                var jsonobj = smJson[i];
+                                var s1 = "";
+
+                                for (var x in jsonobj) {
+                                    var shortMenuImgPath = "";
+                                    var srcShortMenuImgPath = jsonobj["imagePath"];
+
+                                    if ("blueskins" == skin) {
+                                        shortMenuImgPath = srcShortMenuImgPath;
+
+                                    } else if ("greenskins" == skin) {
+                                        var pre = srcShortMenuImgPath.substring(0, srcShortMenuImgPath.indexOf("/"));
+                                        var imgName = srcShortMenuImgPath.substring(srcShortMenuImgPath.indexOf("/"));
+
+                                        shortMenuImgPath = pre + "/greenShortcutIcon" + imgName
+                                    }
+
+                                    s1 = "<a href=\"javascript:f_addTab('"
+                                        + jsonobj['id']
+                                        + "','"
+                                        + jsonobj["menuName"]
+                                        + "','"
+                                        + jsonobj["menuUrl"]
+                                        + "')\" title=\""
+                                        + jsonobj["menuName"]
+                                        + "\" hidefocus=\"true\"><img src=\"/realbowjc/static/realbow/images/" + shortMenuImgPath + "\" /></a>"
+                                }
+                                str += s1;
+                            }
+
+                            $("#smDiv").html(str);
+                        }, "json");
+                }
+            </script>
+            <span id="smDiv"> </span>
+
+
+            <!-- smoke：3级预警翻滚效果 3秒翻滚一次 -->
+            <div class="con" id="list_con" style=" display: none;">
+                <ul class="list" id="news_list">
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f47c4140f0147c4203d870004','一级报警','smoke/operate/smokewarning/main?wl=1')"
+                           title="一级红色报警">
+                            <div class="earlyWarningImg">
+                                <img src="static/realbow/images/yujing_red1.png" width="35" height="45"
+                                     style="vertical-align: center;"/>
+                            </div>
+                            <div class="earlyWarningFont"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f47c4140f0147c420df030005','二级报警','smoke/operate/smokewarning/main?wl=2')"
+                           title="二级黄色报警">
+                            <div class="earlyWarningImg">
+                                <img src="static/realbow/images/yujing_yellow1.png" width="35" height="45"
+                                     style="vertical-align: center;"/>
+                            </div>
+                            <div class="earlyWarningFont"></div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f47c4140f0147c4215f8b0006','三级报警','smoke/operate/smokewarning/main?wl=4')"
+                           title="三级蓝色报警">
+                            <div class="earlyWarningImg">
+                                <!--  <img src="static/realbow/images/yujing_blue1.png" width="45" height="45" style="vertical-align: center;" /> -->
+
+                                <img src="static/realbow/images/yujing_blue1.png" width="35" height="45"
+                                     style="vertical-align: center;"/>
+
+                            </div>
+                            <div class="earlyWarningFont"></div>
+                        </a></li>
+
+                    <!--                      <li> -->
+                    <!--                          <a href="javascript:f_addTab('4028d04746b6a9250146b6d88fed0003','运维任务管理','smoke/operate/smoketask/main')" title="待办任务"> -->
+                    <!--                              <div class="earlyWarningImg"> -->
+                    <!--                                 <img src="static/realbow/images/DaiBanRenWu001.png" width="35" height="45" style="vertical-align: center;" /> -->
+                    <!--                             </div> -->
+
+                    <!--                         </a>    -->
+                    <!--                      </li> -->
+                </ul>
+            </div>
+            <!-- VOCs：事故预警统计 -->
+            <div class="con" id="list_con" style=" display: none;">
+                <ul class="list" id="news_list">
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f47c4140f0147c4203d870004','报警记录','water/data/accidentwarning/main2?systemCode=40')"
+                           title="事故预警">
+                            <div class="earlyWarningImg">
+                                <img src="static/realbow/images/yujing_red1.png" width="35" height="45"
+                                     style="vertical-align: center;"/>
+                            </div>
+                            <div class="earlyWarningFont"></div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <script language="javascript">
+                scrollTitle(3000, 50);
+            </script>
+
+
+            <!-- 图标帮助说明 -->
+            <div id="helpBox" style="position: absolute; z-index: 9999; right: 10px; top: 68px;">
+                <ul style="clear: left; padding-top: 5px; font-size: 12px; padding-left: 20px; text-align: left;">
+                    <li style="height: 25px;"><b>图标说明</b></li>
+                </ul>
+                <ul style="clear: left; font-size: 12px; padding-left: 20px; text-align: left;">
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/greenface0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        优</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/yellowface0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        良</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/redface0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        差</b></li>
+                </ul>
+                <ul style="clear: left; padding-top: 5px; padding-left: 20px; font-size: 12px; text-align: left;">
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/greyface.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        下班</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/close0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        关机</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/kaiqi0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        运行</b></li>
+                </ul>
+                <ul style="clear: left; padding-top: 5px; padding-left: 20px; font-size: 12px; text-align: left;">
+                    <li style="float: left; width: 112px"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/dataZD0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        数据中断</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/GJOne0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        一级报警</b></li>
+                    <li style="float: left; width: 112px;"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/GJTwo0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b style="vertical-align: middle; margin-left: 5px;">
+                        二级报警</b></li>
+                </ul>
+                <ul style="clear: left; padding-top: 5px; padding-left: 20px; font-size: 12px; text-align: left;">
+                    <li style="float: left; width: 112px"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/GJThree0.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b
+                            style="vertical-align: middle; margin-left: 5px;"> 三级报警</b></li>
+                    <li style="float: left; width: 112px"><img
+                            src="/realbowjc/static/realbow/images/helpIcon/DaibanRenwu.png" width="26" height="26"
+                            style="vertical-align: middle;"/> <b
+                            style="vertical-align: middle; margin-left: 5px;"> 待办任务</b></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--     <div id="SetupId" -->
+
+
+<!--     </div> -->
+
+<div class="showPlat1" style="display: none; position: absolute; z-index:999; right: 100px; top:55px;">
+    <div class="arrow-up"></div>
+    <div class="backplat">
+        <ul style="margin: 0; padding: 0; list-style: none; font-size: 12px;">
+            <li><a title="设置快捷方式" id="btnSZMenu" data-remote=""
+                   href="/realbowjc/setmenu/40282c95518fbce30151af1d539c0e51/smoke" data-toggle="modal"
+                   data-target="#myModal"><img src="static/realbow/images/shortcutIcon/SheZhiKuaiJie.png"/></a></li>
+            <li><a id="btnUpdatePassword" data-remote=""
+                   href="/realbowjc/updatePassword/40282c95518fbce30151af1d539c0e51" data-toggle="modal"
+                   data-target="#myModal" title="修改密码"><img src="static/realbow/images/UpdatePasswordIcons1.png"/></a>
+            </li>
+            <li><a id="btnSetSkins" data-remote="" href="/realbowjc/home/setskin" data-toggle="modal"
+                   data-target="#myModal" title="设置皮肤"><img src="/realbowjc/static/realbow/images/SkinIcons1.png"/></a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+<div class="showPlat2" style="display: none; position: absolute; z-index:999; right: 48px; top:55px; ">
+    <div class="arrow-up"></div>
+    <div class="backplat1">
+        <ul style="margin: 0; padding: 0; list-style: none; font-size: 12px;">
+            <!-- <li><a href="/realbowjc/smoke"><img src="/realbowjc/static/realbow/img/smoketz0.png" style="border: 0px; vertical-align: middle;"/></a></li> -->
+
+
+            <li><a href="/realbowjc/" title="跳转平台首页"><img
+                    src="/realbowjc/static/realbow/images/shortcutIcon/homeIcons001.png"
+                    style="border: 0px; vertical-align: middle;"/></a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- 左侧菜单 -->
+<div id="layout1" style="width: 100%; margin: 0 auto;">
+    <div position="left" id="accordion1" class="mCustomScrollbar" data-mcs-theme="minimal">
+        <ul class="accordion">
+
+
+            <li id="" class="files">
+
+
+                <a href="#">
+                    <span class="Menu_one">实时监测</span>
+                    <img name="imgId" src="static/realbow/images/menu/" + styPath width="30" height="30"
+                         style="vertical-align: center; margin-right:5px; margin-top:4px;"/>
+                </a>
+
+
+                <ul class="sub-menu" style="float: right;">
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d03b464a99a101464ae314cf0001','表格监测','smoke/realtime/tablemonitor')"><span
+                                class="Menu_two">表格监测</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d03b464a99a101464ae3801f0002','地图监测','smoke/realtime/gismonitor')"><span
+                                class="Menu_two">地图监测</span> </a></li>
+
+                </ul>
+            </li>
+            <script type="text/javascript">
+                var mPath = 'realtime_icon001.png';
+                if ("blueskins" == skin) {
+                    styPath = mPath;
+                } else if ("greenskins" == skin) {
+                    styPath = "greenMenu/" + mPath;
+                }
+
+                var img = $("[name='imgId']");
+                var tt;
+
+                if (img.length > 1) {
+                    tt = img[img.length - 1];
+                } else {
+                    tt = img[0];
+                }
+
+                $(
+                    tt)
+                    .attr(
+                        "src",
+                        "static/realbow/images/menu/"
+                        + styPath);
+            </script>
+
+            <li id="" class="files">
+
+
+                <a href="#">
+                    <span class="Menu_one">预警报警</span>
+                    <img name="imgId" src="static/realbow/images/menu/" + styPath width="30" height="30"
+                         style="vertical-align: center; margin-right:5px; margin-top:4px;"/>
+                </a>
+
+
+                <ul class="sub-menu" style="float: right;">
+
+                    <li>
+                        <a href="javascript:f_addTab('000000005f52e059015f5cfef76e001c','报警记录','smoke/operate/smokewarning/transferWarn')"><span
+                                class="Menu_two">报警记录</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d039487bf9c901487bfdda610000','报警地图','smoke/realtime/gissmokewarning/main')"><span
+                                class="Menu_two">报警地图</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('ff808081605ebacd016068d8673e0045','报警短信记录','smoke/info/smokesms/main')"><span
+                                class="Menu_two">报警短信记录</span> </a></li>
+
+                </ul>
+            </li>
+            <script type="text/javascript">
+                var mPath = 'Menu_EarlyWarning001.png';
+                if ("blueskins" == skin) {
+                    styPath = mPath;
+                } else if ("greenskins" == skin) {
+                    styPath = "greenMenu/" + mPath;
+                }
+
+                var img = $("[name='imgId']");
+                var tt;
+
+                if (img.length > 1) {
+                    tt = img[img.length - 1];
+                } else {
+                    tt = img[0];
+                }
+
+                $(
+                    tt)
+                    .attr(
+                        "src",
+                        "static/realbow/images/menu/"
+                        + styPath);
+            </script>
+
+            <li id="" class="files">
+
+
+                <a href="#">
+                    <span class="Menu_one">异常查询</span>
+                    <img name="imgId" src="static/realbow/images/menu/" + styPath width="30" height="30"
+                         style="vertical-align: center; margin-right:5px; margin-top:4px;"/>
+                </a>
+
+
+                <ul class="sub-menu" style="float: right;">
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b6a9250146b6bcb97a0000','联动比异常','smoke/abnormal/runstatabnormal')"><span
+                                class="Menu_two">联动比异常</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746addc720146ade4578f0001','数据传输异常','smoke/abnormal/transferabnormal')"><span
+                                class="Menu_two">数据传输异常</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d0cb562540ce01562542be1e0001','超标异常企业','smoke/report/dischargepurifystat/main?abnormal=y')"><span
+                                class="Menu_two">超标异常企业</span> </a></li>
+
+                </ul>
+            </li>
+            <script type="text/javascript">
+                var mPath = 'AbnormalStateQuery_icon001.png';
+                if ("blueskins" == skin) {
+                    styPath = mPath;
+                } else if ("greenskins" == skin) {
+                    styPath = "greenMenu/" + mPath;
+                }
+
+                var img = $("[name='imgId']");
+                var tt;
+
+                if (img.length > 1) {
+                    tt = img[img.length - 1];
+                } else {
+                    tt = img[0];
+                }
+
+                $(
+                    tt)
+                    .attr(
+                        "src",
+                        "static/realbow/images/menu/"
+                        + styPath);
+            </script>
+
+            <li id="" class="files">
+
+
+                <a href="#">
+                    <span class="Menu_one">统计报表</span>
+                    <img name="imgId" src="static/realbow/images/menu/" + styPath width="30" height="30"
+                         style="vertical-align: center; margin-right:5px; margin-top:4px;"/>
+                </a>
+
+
+                <ul class="sub-menu" style="float: right;">
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b6a9250146b6c260240001','综合状态报表','smoke/report/groupstat')"><span
+                                class="Menu_two">综合状态报表</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b1803f0146b1affe020003','联动比报表','smoke/report/runstat')"><span
+                                class="Menu_two">联动比报表</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b1803f0146b1b2f2ed0004','数据上传报表','smoke/report/transferamount')"><span
+                                class="Menu_two">数据上传报表</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('ff808081607875d90160787d37310002','浓度统计报表','smoke/report/historyconcreport/main')"><span
+                                class="Menu_two">浓度统计报表</span> </a></li>
+
+                </ul>
+            </li>
+            <script type="text/javascript">
+                var mPath = 'StatisticalReportQuery_icon001.png';
+                if ("blueskins" == skin) {
+                    styPath = mPath;
+                } else if ("greenskins" == skin) {
+                    styPath = "greenMenu/" + mPath;
+                }
+
+                var img = $("[name='imgId']");
+                var tt;
+
+                if (img.length > 1) {
+                    tt = img[img.length - 1];
+                } else {
+                    tt = img[0];
+                }
+
+                $(
+                    tt)
+                    .attr(
+                        "src",
+                        "static/realbow/images/menu/"
+                        + styPath);
+            </script>
+
+            <li id="" class="files">
+
+
+                <a href="#">
+                    <span class="Menu_one">基础信息</span>
+                    <img name="imgId" src="static/realbow/images/menu/" + styPath width="30" height="30"
+                         style="vertical-align: center; margin-right:5px; margin-top:4px;"/>
+                </a>
+
+
+                <ul class="sub-menu" style="float: right;">
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b1803f0146b18e62f30001','企业信息查询','smoke/info/smokecorp/corpList')"><span
+                                class="Menu_two">企业信息查询</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d04746b1803f0146b18be2000000','设备信息查询','smoke/info/device')"><span
+                                class="Menu_two">设备信息查询</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f4876b95301487759742a0002','监控仪查询','smoke/info/smokemonitor/monitorList')"><span
+                                class="Menu_two">监控仪查询</span> </a></li>
+
+                    <li>
+                        <a href="javascript:f_addTab('4028d03f46cbcdaa0146cbd1ab490000','通讯卡查询','smoke/info/comunicatecard/installedList')"><span
+                                class="Menu_two">通讯卡查询</span> </a></li>
+
+                </ul>
+            </li>
+            <script type="text/javascript">
+                var mPath = 'BasicInformationQuery_icon001.png';
+                if ("blueskins" == skin) {
+                    styPath = mPath;
+                } else if ("greenskins" == skin) {
+                    styPath = "greenMenu/" + mPath;
+                }
+
+                var img = $("[name='imgId']");
+                var tt;
+
+                if (img.length > 1) {
+                    tt = img[img.length - 1];
+                } else {
+                    tt = img[0];
+                }
+
+                $(
+                    tt)
+                    .attr(
+                        "src",
+                        "static/realbow/images/menu/"
+                        + styPath);
+            </script>
+
+        </ul>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content1" style="margin-top: 120px;"></div>
+        </div>
+    </div>
+
+    <!-- 子框架iframe -->
+    <div position="center" id="framecenter">
+        <div tabid="defaultiframe" title="欢迎页面" style="height: 300px">
+            <div class="welcomeImgleftbg" style="height: 100%;">
+                <iframe frameborder="0" allowtransparency="true"
+                        style="background-color: transparent; width: 100%; height: 100%;" name="defaultiframe"
+                        id="defaultiframe" src="/realbowjc/home/welcome2"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display: none"></div>
+
+
+</body>
+</html>
