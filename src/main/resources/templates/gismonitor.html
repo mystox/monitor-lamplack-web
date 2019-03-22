@@ -1,0 +1,313 @@
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <title>广州正虹环境信息系统5.0版--地图监控</title>
+    <link rel="stylesheet" type="text/css" media="screen"
+          href="/realbowjc/static/realbow/css/mapstyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js"
+            type="text/javascript"></script>
+
+
+
+    <script type="text/javascript"
+            src="http://api.map.baidu.com/api?v=2.0&ak=LqWRwxccFM9CXUl3zBUUeA9u"></script>
+
+
+
+    <script type="text/javascript"
+            src="/realbowjc/static/ApiMap/SearchInfoWindow_min.js"></script>
+    <link rel="stylesheet" type="text/css"
+          href="/realbowjc/static/ApiMap/SearchInfoWindow_min.css" />
+</head>
+
+<body style="background: #fff;">
+<div id="allmap">
+    <div id="container"
+         style="height: 100%; -webkit-transition: all 0.5s ease-in-out; transition: all 0.5s ease-in-out;"></div>
+    <div id="showPanelBtn">
+        显示操作面板<br />&lt;
+    </div>
+    <div id="panelWrap" style="overflow: hidden; background:transparent;">
+        <!-- 搜索 开始 -->
+        <div id="r-result"></div>
+        <!-- 搜索 结束 -->
+        <!-- 列表 开始 -->
+        <div id="corpList"
+             style="width: 100%; height: 100%; background:transparent; overflow: hidden; float: left;">
+            <iframe style="height: 100%; width: 310px;"
+                    src="/realbowjc/smoke/realtime/gismonitor/corplist" id="iframeList"
+                    name="iframeList" allowTransparency="true" frameborder="0"
+                    scrolling="no"></iframe>
+            <script type="text/javascript" language="javascript">
+                function iFrameHeight() {
+                    var ifm = document.getElementById("iframeList");
+                    var subWeb = document.frames ? document.frames["iframeList"].document
+                        : ifm.contentDocument;
+                    if (ifm != null && subWeb != null) {
+                        ifm.height = subWeb.body.scrollHeight;
+                    }
+                }
+            </script>
+        </div>
+        <!-- 列表 结束 -->
+        <div id="panel" style="position: absolute;"></div>
+    </div>
+</div>
+
+
+<!--<input type="button" onclick="$('#container div.anchorBL').hide();" value="移除地图LOGO和版权说明"/>-->
+<script type="text/javascript">
+    //标注点数组
+
+    //创建和初始化地图函数：
+    function initMap(BASEDATA) {
+        //var map = new BMap.Map("container",{minZoom:10,maxZoom:19});
+        window.map = new BMap.Map("container", {
+            minZoom : '11',
+            maxZoom : '15'
+        });
+
+        var cr = new BMap.CopyrightControl({
+            anchor : BMAP_ANCHOR_TOP_LEFT
+        }); //设置版权控件位置
+        /* map.addControl(cr); //添加版权控件
+        var bs = map.getBounds(); //返回地图可视区域
+        cr.addCopyright({
+                    id : 1,
+                    content : "<div style='height:60px; border:1px solid #ccc; width:250px; background:url(/realbowjc/static/realbow/images/MapIcon0.png); opacity:0.88; margin-left:68px;'></div>"
+                }); */
+
+        //添加控件
+        var opts = {
+            type : BMAP_NAVIGATION_CONTROL_SMALL
+        }; //缩放图外观
+        map.addControl(new BMap.NavigationControl(opts)); //控制比例
+
+        map.addControl(new BMap.ScaleControl()); //比例尺控件
+        map.addControl(new BMap.OverviewMapControl()); //缩略地图控件
+        //map.addControl(new BMap.MapTypeControl()); //地图类型控件
+
+        map.enableScrollWheelZoom(); //启用滚轮放大缩小，默认禁用
+        map.enableContinuousZoom(); //启用地图惯性拖拽，默认禁用
+        //设置版权信息
+        var cr = new BMap.CopyrightControl({
+            anchor : BMAP_ANCHOR_BOTTOM_RIGHT
+        });
+        /* cr.addCopyright({
+            id : 1,
+            content : "<strong>技术支持：广州正虹科技发展有限公司</strong>"
+        }); */
+        map.addControl(cr);
+
+        var x = parseFloat('112.85871');
+        var y = parseFloat('35.496902');
+        var gisLevel = parseFloat('14');
+
+        //var point = new BMap.Point(113.334893, 23.140759);//广州天河区体育中心
+        var point = new BMap.Point(x, y);//广州天河区体育中心
+        //}
+
+        //地图初始化
+        map.centerAndZoom(point, gisLevel);
+        map.enableScrollWheelZoom();
+        //向地图中添加marker
+        addMarker(BASEDATA);
+        //设置地图样式
+        /* map.setMapStyle({
+            styleJson : [ {
+                "featureType" : "subway",
+                "elementType" : "all",
+                "stylers" : {
+                    "visibility" : "off"
+                }
+            }, {
+                "featureType" : "railway",
+                "elementType" : "all",
+                "stylers" : {
+                    "visibility" : "off"
+                }
+            }, {
+                "featureType" : "highway",
+                "elementType" : "geometry.fill",
+                "stylers" : {
+                    "color" : "#f6eac0",
+                    "weight" : "0.6"
+                }
+            }, {
+                "featureType" : "water",
+                "elementType" : "all",
+                "stylers" : {
+                    "color" : "#95bdd6"
+                }
+            }, {
+                "featureType" : "highway",
+                "elementType" : "geometry.stroke",
+                "stylers" : {
+                    "color" : "#eccfac",
+                    "weight" : "0.8"
+                }
+            }, {
+                "featureType" : "land",
+                "elementType" : "all",
+                "stylers" : {
+                    "color" : "#fdfbf7"
+                }
+            } ]
+        }); */
+    }
+
+    //创建marker
+    window.addMarker = function(data) {
+        map.clearOverlays();
+        for ( var i = 0; i < data.length; i++) {
+            var json = data[i];
+            var p0 = json.point.split("|")[0];
+            var p1 = json.point.split("|")[1];
+            var point = new BMap.Point(p0, p1);
+            var iconImg = createIcon(json.efficiency, json.icon);
+            var marker = new BMap.Marker(point, {
+                icon : iconImg,
+                title : json.title
+            });
+            var iw = createInfoWindow(i);
+            var label = new BMap.Label(json.title + json.dataStatus, {
+                "offset" : new BMap.Size(json.icon.lb - json.icon.x + 10,
+                    -20)
+            });
+
+            marker.setLabel(label);
+            map.addOverlay(marker);
+
+            label.setStyle({
+                borderColor : "#f00",
+                color : "#333",
+                cursor : "pointer",
+                display : "none"
+            });
+
+            (function() {
+                //alert("rr");
+                var _json = json;
+                var _iw = createInfoWindow(_json);
+                var _marker = marker;
+                _marker.addEventListener("click", function() {
+                    //alert("1");
+                    var _iw = createInfoWindow(_json);
+                    this.openInfoWindow(_iw);
+                });
+                _marker.addEventListener("mouseover", function() {
+                    //alert(1);
+                    _marker.getLabel().setStyle({ //给label设置样式，任意的CSS都是可以的
+                        display : "block"
+                    });
+                });
+                _marker.addEventListener("mouseout", function() {
+                    _marker.getLabel().setStyle({ //给label设置样式，任意的CSS都是可以的
+                        display : "none"
+                    });
+                });
+                _iw.addEventListener("open", function() {
+                    _marker.getLabel().hide();
+                });
+                _iw.addEventListener("close", function() {
+                    _marker.getLabel().show();
+                });
+                label.addEventListener("click", function() {
+                    //alert("2");
+                    _marker.openInfoWindow(_iw);
+                });
+                if (!!json.isOpen) {
+                    label.hide();
+                    //alert("3");
+                    _marker.openInfoWindow(_iw);
+                }
+            })();
+        }
+    };
+    //创建InfoWindow
+    function createInfoWindow(json) {
+        //alert("创建");
+        var sContent = "";
+        if (json.id == undefined) {
+        } else {
+            var sContent = "<b class='iw_poi_title' style='font-size:14px; font-family:微软雅黑; ' title='" + json.title + "'>"
+                + json.title
+                + "</b><iframe width='100%' style='height:370px;' scrolling='no' frameborder=0 src='/realbowjc/smoke/realtime/gismonitor/detail/"
+                + json.id + "'></iframe>";
+        }
+
+        var iw = new BMap.InfoWindow(sContent, {
+            enableMessage : false,
+            width : 580,
+            height : 360
+        });
+        return iw;
+    }
+    //创建一个Icon
+    function createIcon(efficiency, json) {
+        var img = "closeIcon.png";
+        if (efficiency == 1) {
+            img = "greenfaceIcon.png";
+        } else if (efficiency == 2) {
+            img = "yellowfaceIcon.png";
+        } else if (efficiency == 3) {
+            img = "redfaceIcon.png";
+        } else if (efficiency == 0) {
+            img = "xiaBan001.png";
+        } else if (efficiency == 6) {
+            img = "closeIcon.png";
+        }
+        var icon = new BMap.Icon("/realbowjc/static/realbow/images/" + img,
+            new BMap.Size(json.w, json.h), {
+                imageOffset : new BMap.Size(-json.l, -json.t),
+                infoWindowAnchor : new BMap.Size(json.lb + 5, 1),
+                offset : new BMap.Size(json.x, json.h)
+            });//,anchor: new BMap.Size(15, 34)
+        return icon;
+    }
+
+    //initMap();//创建和初始化地图
+    //init_MiddleLeft();//创建企业列表
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    var isPanelShow = false;
+    //显示结果面板动作
+    $("showPanelBtn").onclick = function() {
+        if (isPanelShow == false) {
+            isPanelShow = true;
+            $("showPanelBtn").style.right = "310px";
+            $("panelWrap").style.width = "310px";
+            $("panelWrap").style.overflow = "hidden";
+            $("container").style.marginRight = "310px";
+            $("showPanelBtn").innerHTML = "隐藏操作面板<br/>>";
+        } else {
+            isPanelShow = false;
+            $("showPanelBtn").style.right = "0px";
+            $("panelWrap").style.width = "0px";
+            $("panelWrap").style.overflow = "hidden";
+            $("container").style.marginRight = "0px";
+            $("showPanelBtn").innerHTML = "显示操作面板<br/><";
+        }
+    };
+    //点击企业列表的企业时弹出窗口信息
+    function openWin(data) {
+        var p0 = data.point.split("|")[0];
+        var p1 = data.point.split("|")[1];
+
+        console.info(p0 + " - " + p1);
+        var point = new BMap.Point(p0, p1);
+        var _iw = createInfoWindow(data);
+        map.openInfoWindow(_iw, point); //开启信息窗口
+    }
+</script>
+</body>
+
+</html>
