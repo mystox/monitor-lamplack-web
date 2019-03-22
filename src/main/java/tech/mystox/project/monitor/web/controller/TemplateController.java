@@ -182,5 +182,16 @@ public class TemplateController
         return "smokesmsList";
     }
 
+ /**
+     * 预警报警-报警短信记录-详情
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/info/smokesms/detail/{id}")
+    public String smokesmsDetail(@PathVariable String id)
+    {
+        return "smokesmsDetail";
+    }
+
 
 }
