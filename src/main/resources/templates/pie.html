@@ -1,0 +1,244 @@
+<html>
+<body>
+
+<script src="/realbowjc/static/realbow/js/drag.js" type="text/javascript"></script>
+<script type="text/javascript">
+    //jQuery.noConflict();
+    $(function () {
+        $('#fanStatusDiv').highcharts({
+            credits: {
+                enabled: false // 禁用版权信息
+            },
+            chart: {
+                type: 'pie',
+                options3d: {
+                    enabled: false,
+                    alpha: 45,
+                    beta: 0
+                }
+            },
+            colors: [
+                '#7fce72',//第一个颜色 绿色 开
+                '#f4494a',//第二个颜色 红色 关
+                '#f2949f'
+            ],
+            title: {
+                text: '风机运行状态分析'
+            },
+            subtitle: {
+                text: '总计21台'
+            },
+            tooltip: {
+                pointFormat: '{point.y}台，占 {point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    depth: 35,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}{point.y}台 '
+                    }
+                }
+            },
+            series: [{
+                type: 'pie',
+                name: '风机状态',
+                data: [
+                    ['运行', 20],
+                    ['关机', 1],
+                    ['中断', 0]
+                ]
+            }]
+        });
+
+
+        $('#purStatusDiv').highcharts({
+            credits: {
+                enabled: false // 禁用版权信息
+            },
+            chart: {
+                type: 'pie',
+                options3d: {
+                    enabled: false,
+                    alpha: 45,
+                    beta: 0
+                }
+            },
+            colors: [
+                '#7fce72',//第一个颜色
+                '#f4494a',//第二个颜色,
+                '#f2949f'
+            ],
+            title: {
+                text: '净化器运行状态分析'
+            },
+            subtitle: {
+                text: '总计21台'
+            },
+            tooltip: {
+                pointFormat: '{point.y}台，占 <b>{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    depth: 35,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}{point.y}台 '
+                    }
+                }
+            },
+            series: [{
+                type: 'pie',
+                name: '净化器状态',
+                data: [
+                    ['运行', 17],
+                    ['关机', 4],
+                    ['中断', 0]
+                ]
+            }]
+        });
+
+
+        $('#purifierDiv').highcharts({
+            credits: {
+                enabled: false // 禁用版权信息
+            },
+            chart: {
+                type: 'pie',
+                options3d: {
+                    enabled: false,
+                    alpha: 45,
+                    beta: 0
+                }
+            },
+            colors: [
+                '#7fce72',//第一个颜色
+                '#f5cc5e',//第二个颜色
+                '#f4494a',//第三个颜色
+                '#cccccc',
+                '#f2949f'
+            ],
+            title: {
+                text: '净化效能分析'
+            },
+            subtitle: {
+                text: '总计21台, 17台运行'
+            },
+            tooltip: {
+                pointFormat: '{point.y}台，占{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    depth: 35,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}{point.y}台'
+                    }
+                }
+            },
+            step: 80,
+            series: [{
+                type: 'pie',
+                name: '净化效能',
+                data: [
+                    ['优', 11],
+                    ['良', 4],
+                    {
+                        name: '差',
+                        y: 5,
+                        sliced: true,
+                        selected: true
+                    }
+                    ,
+                    ['关', 1],
+                    ['中断', 0]
+                ]
+            }]
+        });
+
+        //浓度超标统计图
+        $('#concDiv').highcharts({
+            credits: {
+                enabled: false // 禁用版权信息
+            },
+            chart: {
+                type: 'pie',
+                options3d: {
+                    enabled: false,
+                    alpha: 45,
+                    beta: 0
+                }
+            },
+            colors: [
+                '#f4494a',//第一个颜色
+                '#7fce72',//第二个颜色
+                '#f2949f',//第三个颜色
+                '#cccccc',
+                '#f5cc5e'
+            ],
+            title: {
+                text: '排放浓度统计分析'
+            },
+            subtitle: {
+                text: '总计21家'
+            },
+            tooltip: {
+                pointFormat: '{point.y}家，占{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    depth: 35,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}{point.y}家'
+                    }
+                }
+            },
+            step: 80,
+            series: [{
+                type: 'pie',
+                name: '浓度超标统计分析',
+                data: [
+                    ['浓度超标', 5],
+                    ['正常', 15],
+                    ['关机', 1],
+                    ['中断', 0]
+                ]
+            }]
+        });
+    });
+</script>
+
+<div id="win" style="position: relative; left: -10px; top: 20px; margin:auto; width:620px;">
+    <div id="titledrag" class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+                aria-hidden="true">&times;
+        </button>
+        <h4 class="modal-title" id="myModalLabel">图表分析</h4>
+    </div>
+
+    <!-- 3###  -->
+    <div class="modal-body">
+        <div style="overflow-x:auto; height: 460px; width:620px; margin-top:10px;">
+            <div id="fanStatusDiv"
+                 style="min-width:300px; height:220px; float:left; border: 1px dashed #ccc; margin-left:10px;"></div>
+            <div id="purStatusDiv" style="min-width:300px; height:220px; float:left; border: 1px dashed #ccc;"></div>
+            <div id="purifierDiv"
+                 style="min-width:300px; height:220px; clear:left; float:left; border: 1px dashed #ccc; margin-left:10px;"></div>
+            <!-- 浓度超标统计图 -->
+
+            <div id="concDiv" style="min-width:300px; height:220px; float:left; border: 1px dashed #ccc;"></div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

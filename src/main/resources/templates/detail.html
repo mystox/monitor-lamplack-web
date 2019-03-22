@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <title>My JSP 'gis_corp_info.jsp' starting page</title>
+    <link href="/realbowjc/static/realbow/css/mapmarker-window.css" rel="stylesheet" type="text/css" />
+
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#corpInfo").get(0).click();
+        });
+        function changeSrc(url) {
+            window.frames["infoIf"].document.location=url;
+        }
+    </script>
+
+    <script type=text/javascript>
+        $(function(){
+            $("#tags li").click(function(){
+                $("#tags li").removeClass("selectTag");
+                $(this).addClass("selectTag");
+            });
+        });
+    </script>
+</head>
+
+<body>
+<!--     <div id=con> -->
+<!--         <ul id=tags> -->
+<!--             <li><a onClick="selectTag('tagContent0',this)" href="javascript:void(0)">企业信息</a></li> -->
+<!--             <li class=selectTag><a onClick="selectTag('tagContent1',this)" href="javascript:void(0)">企业分组一</a></li> -->
+<!--             <li><a onClick="selectTag('tagContent2',this)" href="javascript:void(0)">企业分组二</a></li> -->
+<!--         </ul> -->
+<!--         <div id=tagContent> -->
+<!--             <div class=tagContent id=tagContent0>sssss</div> -->
+<!--             <div class="tagContent selectTag" id=tagContent1>第二个标签的内容</div> -->
+<!--             <div class=tagContent id=tagContent2>第三个标签的内容</div> -->
+<!--         </div> -->
+<!--     </div> -->
+
+<div id="con">
+    <ul id="tags">
+        <li class="selectTag"><a id="corpInfo" href="javascript:void(0)" onclick="changeSrc('/realbowjc/smoke/realtime/gismonitor/corpDetail/40282cc55e6e9cd8015e73adce340095')">企业信息</a></li>
+
+        <li><a id="40282cc55e6e9cd8015e73b0387a009f" href="javascript:void(0)" onclick="changeSrc('/realbowjc/smoke/realtime/gismonitor/deviceDetail/40282cc55e6e9cd8015e73b0387a009f')">分组1数据</a></li>
+        <li><a id="corpInfo" href="javascript:void(0)" onclick="changeSrc('/realbowjc/smoke/report/groupstatcurve/runHigh/40282cc55e6e9cd8015e73aec8ae009a?beginDate=2019-03-21&endDate=2019-03-22')">净化器运行时间</a></li>
+
+    </ul>
+</div>
+<div id="tagContent">
+    <div class="tagContent selectTag" id="tagContent0">
+        <iframe id="infoIf" name="infoIf" src=" " scrolling="auto" height="280" allowTransparency="true"  width="100%" frameborder="0"></iframe>
+    </div>
+</div>
+</body>
+</html>

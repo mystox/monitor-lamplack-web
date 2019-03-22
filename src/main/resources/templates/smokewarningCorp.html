@@ -1,0 +1,217 @@
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <title>广州正虹环境信息系统5.0版</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+
+    <!-- required-->
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/jquery-ui-custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/grid.locale-cn.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/tab-jquery.jqGrid.js" type="text/javascript"></script>
+
+    <!-- optional -->
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+    <script type="text/javascript" src="/realbowjc/static/jquery/jquery-ui.js" ></script>
+    <script type="text/javascript">
+        window.onload=window.onresize= function  _doResize() {
+            var ss = pageSize();
+            $("#list").jqGrid('setGridWidth', ss.WinW-0).jqGrid('setGridHeight', ss.WinH-285);
+        }
+
+        function pageSize() {
+            var winW, winH;
+            if(window.innerHeight) {// all except IE
+                winW = window.innerWidth;
+                winH = window.innerHeight;
+            } else if (document.documentElement && document.documentElement.clientHeight) {// IE 6 Strict Mode
+                winW = document.documentElement.clientWidth;
+                winH = document.documentElement.clientHeight;
+            } else if (document.body) { // other
+                winW = document.body.clientWidth;
+                winH = document.body.clientHeight;
+            }  // for small pages with total size less then the viewport
+            return {WinW:winW, WinH:winH};
+        }
+
+    </script>
+
+    <script>
+        $(function() {
+            $( "#slider-range-max" ).slider({
+                range: "max",
+                min: 72,
+                max: 100,
+                value: 100,
+                animate: true ,
+                //orientation: "vertical",
+                slide: function( event, ui ) {
+                    var num = ui.value;
+                    var nf = num / 100;
+                    $("#mapRightbg").css("opacity", nf);
+                    $("#mapRightbg").css("filter", "alpha(opacity="+ui.value+")");
+
+                    $(".grid_table").css("opacity", nf);
+                    $(".grid_table").css("filter", "alpha(opacity="+ui.value+")");
+
+                    $("#list").css("opacity", nf);
+                    $("#list").css("filter", "alpha(opacity="+ui.value+")");
+
+                    $("#pager").css("opacity", nf);
+                    $("#pager").css("filter", "alpha(opacity="+ui.value+")");
+
+                }
+            });
+        });
+    </script>
+
+
+    <script src="/realbowjc/static/lhgcalendar/lhgcalendar.min.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var row = '20,30,50,100'.split(",");
+        var def = '20';
+        $(function(){
+            $("#searchBtn").click(RealJs.clickSelectBtn);
+
+            $("#begingTime").calendar({format : 'yyyy-MM-dd'});
+            $("#endTime").calendar({format : 'yyyy-MM-dd'});
+        });
+
+
+    </script>
+</head>
+
+<body style="background:transparent;">
+<div id="mapRightbg" style="background:#f1f9fd; height:100%;">
+    <div style="height: 180px; width: 100%;">
+        <form id="searchForm" class="form-horizontal" style="margin-left: 15px;">
+            <label class="queryLabel" style="margin-left:-39px;">查询条件：</label>
+            <select id="warnLevel" name="warnLevel" class="form-control" style="margin-left: 15px; margin-top: 5px; width: 144px;">
+                <option value="">所有报警</option>
+                <option  value="1">一级报警</option>
+                <option  value="2">二级报警</option>
+                <option  value="4">三级报警</option>
+                <option  value="3">通讯报警</option>
+            </select>
+            <div>
+                <input id="begingTime" name="begingTime" class="form-control" style="width:110px; margin-left: 15px;" title="开始时间" defaultValue="开始时间" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" value="2019-03-15"/>
+                <input id="endTime" name="endTime" class="form-control" style="width:110px;" title="结束时间" defaultValue="结束时间" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" value="2019-03-21"/>
+                <input name="corpCode" class="form-control" style="width:110px; margin-left: 15px; display: none;" defaultValue="企业编码" value="企业编码" onFocus="RealJs.clearTip(this)" onBlur="RealJs.showTip(this)" />
+                <input name="corpName" class="form-control" style="width:110px; margin-left: 15px; margin-top:5px;" defaultValue="企业名称" value="企业名称"onFocus="RealJs.clearTip(this)" onBlur="RealJs.showTip(this)" />
+                <input name="areaName" class="form-control" style="width:110px; margin-top:5px;" defaultValue="所属" value="所属" onFocus="RealJs.clearTip(this)" onBlur="RealJs.showTip(this)" />
+                <input name="address" class="form-control" style="margin-top: 5px; width:110px;  margin-left: 15px;" defaultValue="地址" value="地址" onFocus="RealJs.clearTip(this)" onBlur="RealJs.showTip(this)" />
+
+
+
+            </div>
+        </form>
+
+        <div>
+            <button class="btn btn-info" id="searchBtn" style="margin-left: 15px; margin-top: 5px;">查 询</button>
+        </div>
+    </div>
+
+    <div class="grid_table">
+        <table id="list"></table>
+        <div id="pager"></div>
+    </div>
+
+    <script type="text/javascript">
+        jQuery(document).ready(function() {
+            $.jgrid.defaults = $.extend($.jgrid.defaults, {
+                loadui : "enable"
+            });
+        });
+
+        var lastSel;
+
+        $("#list").jqGrid({
+            url : '/realbowjc/smoke/realtime/gissmokewarning/page', //请求数据的url地址
+            mtype : 'POST',
+            datatype : "json", //请求的数据类型
+            colNames : [ '企业编码', '企业名称','point' ,'title','id', '定位', '' ], //###数据列名称（数组）
+            colModel : [ //###数据列各参数信息设置
+                {name : 'corpCode',width : 100,align : 'center',title : false, hidden:true},
+                {name : 'corpName',width : 208,align : 'left',title : false},
+                {name : 'point',width : 0, align : 'center',hidden:true,title : false},
+                {name : 'title',width : 0, align : 'center',hidden:true,title : false},
+                {name : 'id',width : 0, align : 'center',hidden:true,title : false},
+                {name : 'gisPositioning',width : 50,align : 'center',hidden:true,title : false},
+                {name : 'area.areaName',width : 50,align : 'center',title : false}],
+
+            gridComplete : function() {
+                var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+                for ( var i = 0; i < ids.length; i++) {
+                    var cl = ids[i];
+                    var imgId = "gisDW" + i;
+
+                    gis = "<a onClick='myclick(\""+ids[i]+"\")'><img id='"+imgId+"' name='gisDW' src='/realbowjc/static/realbow/images/LocationMarkIcon.png' border='none' style='filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/realbowjc/static/realbow/images/LocationMarkIcon.png', enabled=true, sizingMethod=scale);' /></a>"
+                    $("#list").jqGrid('setRowData',ids[i],{gisPositioning : gis});
+                }
+            },
+            postData : $("#searchForm").formtojson(),
+            rowNum : 15, //每页显示记录数,
+            //rowList:row, //分页选项，可以下拉选择每页显示记录数
+            pager : '#pager', //表格数据关联的分页条，html元素
+            //pagerpos : 'left',
+            autowidth : true, //自动匹配宽度
+            height : 275, //设置高度
+            gridview : true, //加速显示
+            viewrecords : true, //显示总记录数
+            //repeatitems : false,
+            sortable : true, //可以排序
+            //sortname : 'id', //排序字段名
+            sortorder : "desc", //排序方式：倒序，本例中设置默认按id倒序排序
+            jsonReader : {
+                root : "content", //json数据模型
+                total : "totalPages", //数据总页码
+                records : "totalElements", //数据总记录数
+                repeatitems : false
+                //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+            },
+            onSelectRow: function(id){
+                if(id && id!==lastSel){
+                    jQuery('#list').restoreRow(lastSel);
+                    lastSel=id;
+                }
+                myclick(id);
+            },
+            loadComplete : function(data) { //完成服务器请求后，回调函数
+                BASEDATA = data.content;//如果没有记录返回，追加提示信息，删除按钮不可用
+                //initMap(BASEDATA);//创建和初始化地图
+                //init_MiddleLeft(BASEDATA);//创建企业列表
+                window.parent.initMap(BASEDATA);//在地图上创建标注信息
+            }
+        });
+    </script>
+
+    <script type="text/javascript">
+        function myclick(id) {
+            var rowData = $("#list").jqGrid('getRowData',id);
+            var data = $(rowData)[0];
+            var data_a = [];
+            data_a.push(data);
+            window.parent.openWin(data);
+        }
+    </script>
+</div>
+<div style="padding-top:10px; position: absolute; width:100%; bottom: 10px; border-top:1px solid #d0e1f0;">
+    <span style="float:left;  font-size:12px; margin-left:15px; margin-top:-3px;">设置透明度：</span>
+    <div id="slider-range-max" style="float:left; width:120px; height:8px; background:#f5ffd4; border:1px solid #a6caec;"></div>
+</div>
+
+</body>
+</html>
