@@ -161,6 +161,16 @@ public class TemplateController
     {
         return "smokewarningCorp";
     }
+ /**
+     * 预警报警-地图报警-数据节点详情
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/realtime/gissmokewarning/warningDetail/{id}")
+    public String warningDetail(@PathVariable String id)
+    {
+        return "warningDetail";
+    }
 
 
 }
