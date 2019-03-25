@@ -161,7 +161,8 @@ public class TemplateController
     {
         return "smokewarningCorp";
     }
- /**
+
+    /**
      * 预警报警-地图报警-数据节点详情
      *
      * @return
@@ -171,7 +172,8 @@ public class TemplateController
     {
         return "warningDetail";
     }
- /**
+
+    /**
      * 预警报警-报警短信记录
      *
      * @return
@@ -182,7 +184,7 @@ public class TemplateController
         return "smokesmsList";
     }
 
- /**
+    /**
      * 预警报警-报警短信记录-详情
      *
      * @return
@@ -191,6 +193,75 @@ public class TemplateController
     public String smokesmsDetail(@PathVariable String id)
     {
         return "smokesmsDetail";
+    }
+
+    /**
+     * 异常查询-联动比查询
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/abnormal/runstatabnormal")
+    public String abnormalRunStatabNormal()
+    {
+        return "abnormalRunStatabNormal";
+    }
+
+    /**
+     * 企业明细信息
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/info/smokecorp/corpInfo/{id}")
+    public String abnormalRunStatabNormal(@PathVariable String id)
+    {
+        return "corpInfo";
+    }
+
+    /**
+     * 异常查询-传输异常
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/abnormal/transferabnormal")
+    public String abnormalTransferAbnormal()
+    {
+        return "abnormalTransferAbnormal";
+    }
+
+    /**
+     * 异常查询-传输异常-详情
+     *
+     * @return
+     */
+    @RequestMapping("realbowjc/smoke/abnormal/transferabnormal/detail/{id}")
+    public String transferAbnormal(@PathVariable String id)
+    {
+        logger.info("异常查询-传输异常-详情" + id);
+        return "transferAbnormal";
+    }
+
+    /**
+     * 异常查询-超标异常企业
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/report/dischargepurifystat/main")
+    public String dischargepurifystatMain()
+    {
+        logger.info("异常查询-超标异常企业");
+        return "dischargepurifystatMain";
+    }
+
+    /**
+     * 异常查询-超标异常企业
+     *
+     * @return
+     */
+    @RequestMapping("/realbowjc/smoke/report/dischargepurifystat/detail/{id}")
+    public String dischargepurifystatDetail()
+    {
+        logger.info("异常查询-传输异常-详情");
+        return "dischargepurifystatDetail";
     }
 
 

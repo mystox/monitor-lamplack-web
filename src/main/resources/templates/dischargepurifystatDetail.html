@@ -1,0 +1,460 @@
+
+
+
+
+
+
+<!-- 1###-->
+
+
+
+<html>
+<head>
+    <title>超标异常详情统计 </title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+    <script src="/realbowjc/static/realbow/js/drag.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/date/WdatePicker.js" type="text/javascript"></script>
+    <!-- required -->
+    <link href="/realbowjc/static/jquery-validation/1.11.1/validate.css" type="text/css" rel="stylesheet" />
+    <script src="/realbowjc/static/jquery-validation/1.11.1/jquery.validate.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery-validation/1.11.1/messages_bs_zh.js" type="text/javascript"></script>
+    <link href="/realbowjc/static/realbow/css/mapmarker-window.css" rel="stylesheet" type="text/css" />
+    <link href="/realbowjc/static/realbow/css/comprehensive-window.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript">
+        function gridReload() {
+            $("#list1").jqGrid('setGridParam', {
+                postData : $("#searchForm1").formtojson()
+            }).trigger("reloadGrid");
+        }
+
+        function efficiencyImg(value, options, rData){
+            if (value=='1good')
+            //return '<img src="/realbowjc/static/realbow/images/helpIcon/greenface0.png">';
+                return '优';
+            else if (value=='2general')
+            //return '<img src="/realbowjc/static/realbow/images/helpIcon/yellowface0.png">';
+                return '良';
+            else if (value=='3bad')
+            //return '<img src="/realbowjc/static/realbow/images/helpIcon/redface0.png">';
+                return '差';
+            else if(value=='0close')
+            //return '<img src="/realbowjc/static/realbow/images/helpIcon/greyface.png">';
+                return '关机';
+            else
+            //return '<img src="/realbowjc/static/realbow/images/helpIcon/dataZD0.png">';
+                return '数据中断';
+        }
+
+        $(function() {
+            $("#beginDate1").calendar({
+                format : 'yyyy-MM-dd'
+            });
+
+            $("#endDate1").calendar({
+                format : 'yyyy-MM-dd'
+            });
+
+            $("#beginDatem").calendar({
+                format : 'yyyy-MM'
+            });
+
+            $("#endDatem").calendar({
+                format : 'yyyy-MM'
+            });
+
+            $("#beginDatey").calendar({
+                format : 'yyyy'
+            });
+
+            $("#endDatey").calendar({
+                format : 'yyyy'
+            });
+
+            $("#btnExport1").click(function(ev) {
+                ev.preventDefault();
+                var target = $(this).attr("href");
+                $("#searchForm1").attr("action", target);
+                $("#searchForm1").attr("target", "_blank");
+
+                $("#searchForm1").clearDefaultValue();
+                $("#searchForm1").submit();
+                $("#searchForm1").resetDefaultValue();
+            }); //导出
+
+            if ($("#reportType").val() == 'w') {
+                onlyNum();
+            }
+        })
+
+        function onlyNum() {
+            $("#bweek").keyup(function() {
+                //如果输入非数字，则替换为''
+                this.value = this.value.replace(/[^\d]/g, '');
+            })
+            $("#eweek").keyup(function() {
+                //如果输入非数字，则替换为''
+                this.value = this.value.replace(/[^\d]/g, '');
+            })
+        }
+
+        function selectTag(showContent, selfObj) {
+            // 操作标签
+            var tag = document.getElementById("tags").getElementsByTagName("li");
+            var taglength = tag.length;
+            for (i = 0; i < taglength; i++) {
+                tag[i].className = "";
+            }
+            selfObj.parentNode.className = "selectTag";
+            // 操作内容
+            for (i = 0; j = document.getElementById("tagContent" + i); i++) {
+                j.style.display = "none";
+            }
+            document.getElementById(showContent).style.display = "block";
+            avgMethod('purifyAvg');
+        }
+
+    </script>
+    <script type="text/javascript">
+        function avgMethod(type){
+            var href;
+            if(false){
+                if(type=='concAvg'){
+                    href="/realbowjc/smoke/report/dischargepurifystat/concAvg//2019-03-24/d/";
+                }else if(type=='purifyAvg'){
+                    href="/realbowjc/smoke/report/dischargepurifystat/purifyAvg//2019-03-24/d/";
+                }
+            }else{
+                if(type=='concAvg'){
+                    href="/realbowjc/smoke/report/dischargepurifystat/concHourAvg/40282cc55e6e9cd8015e74408e410129/2019-03-24";
+                }else if(type=='purifyAvg'){
+                    href="/realbowjc/smoke/report/dischargepurifystat/purifyAvg/40282cc55e6e9cd8015e74408e410129/2019-03-24";
+                }
+            }
+            $.get(href, function(result){
+                result1 = {
+                    "titel" : "去除率均值(%)",
+                    "tickInterval" : 3,
+                    "conc_avg" : [ 0.0, 0.0, 0.0, 0.0, 0.0, 11.59, 75.8, 50.48, 21.41, 31.67, 61.72, 50.76, 54.89, 57.92, 0.0, 0.0, 1.48, 67.94, 60.37, 65.74, 71.46, 30.1, 0.0, 0.0 ],
+                    "statDate" : [ "2019-03-24 00", "2019-03-24 01", "2019-03-24 02", "2019-03-24 03", "2019-03-24 04", "2019-03-24 05", "2019-03-24 06", "2019-03-24 07", "2019-03-24 08", "2019-03-24 09", "2019-03-24 10", "2019-03-24 11", "2019-03-24 12", "2019-03-24 13", "2019-03-24 14", "2019-03-24 15", "2019-03-24 16", "2019-03-24 17", "2019-03-24 18", "2019-03-24 19", "2019-03-24 20", "2019-03-24 21", "2019-03-24 22", "2019-03-24 23" ]
+                };
+                console.log(result1)
+                console.log(result);
+
+
+                $('#container').highcharts({
+                    credits:{
+                        enabled:false // 禁用版权信息
+                    },
+                    chart: {
+                        type: 'spline'
+                    },
+                    title: {
+                        text: result.titel
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            var value = Math.pow(10, this.y);
+                            var rt = this.y;
+                            if (value<0.01)
+                                return 0;
+                            return this.x.substr(0, 10) + " " + this.x.substr(10) + "<br/>" + this.series.name + ": " + rt;
+                        }
+                    },
+                    xAxis: {
+                        labels: {
+                            staggerLines: 2,
+                            useHTML:true,
+                            formatter: function() {
+                                return this.value.substr(5);
+                            }
+                        },
+                        tickInterval: result.tickInterval,
+                        categories: result.statDate
+                    },
+                    yAxis: {
+                        min:0,
+                        title: {
+                            text: result.titel
+                        },
+                        plotLines: [{
+                            value: result.redValue,
+                            width: 1,
+                            color: 'red',
+                            label:{
+                                text:'<span style="color:red">'+result.redValue+'</span>',
+                                align:'right',
+                                y:5
+                            }
+                        },{
+                            value: result.yellowLowValue,
+                            width: 1,
+                            color: '#FFCC00',
+                            label:{
+                                text:'<span style="color:#FFCC00">'+result.yellowLowValue+'</span>',
+                                align:'right',
+                                y:5
+                            }
+                        },{
+                            value: result.greenLowValue,
+                            width: 1,
+                            color: 'green',
+                            label:{
+                                text:'<span style="color:green">'+result.greenLowValue+'</span>',
+                                align:'right',
+                                y:5
+                            }
+                        }]
+                    },
+                    legend : {
+                        enabled : false//设置图例不可见
+                    },
+                    series: [{
+                        name: result.titel,
+                        data: result.conc_avg
+                    }]
+                });
+            });
+        }
+
+        function efficiencyMethod(){
+            var href;
+            if(false){
+                href="/realbowjc/smoke/report/dischargepurifystat/efficiency//2019-03-24/d/";
+            }else{
+                href="/realbowjc/smoke/report/dischargepurifystat/efficiency/40282cc55e6e9cd8015e74408e410129/2019-03-24";
+            }
+            $.get(href, function(result){
+                var data = [];
+                $('#container').highcharts({
+                    credits:{
+                        enabled:false // 禁用版权信息
+                    },
+                    exporting: {
+                        enabled:false //去除右上角导出按钮
+                    },
+                    chart: {
+                        type: 'spline',
+                        marginRight: 50
+                    },
+                    title: {
+                        text: ''
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            var effi = "优";
+                            if (this.y==1.5){
+                                effi = "良";
+                            }else if (this.y==0.5){
+                                effi = "差";
+                            }else if (this.y==3.5){
+                                effi = "关机";
+                            }else if (this.y==-0.5){
+                                effi = "数据中断";
+                            }
+                            return this.x + "<br/>" + this.series.name + ": " + effi;
+                        }
+                    },
+                    xAxis: {
+                        labels: {
+                            staggerLines: 2,
+                            formatter: function() {
+                                return this.value.substr(5);
+                            }
+                        },
+                        tickInterval: result.tickInterval,
+                        categories: result.statDate
+                    },
+                    yAxis: {
+                        type: 'spline',
+                        title: {
+                            text: '净化效能'
+                        },
+                        labels: {
+                            formatter:function(){
+                                return "";
+                            }
+                        },
+                        min:-1,
+                        max:4,
+                        plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }],plotBands: [{ // Light air
+                            from: -1,
+                            to: 0,
+                            color: 'rgba(128, 128, 128, 0.4)',
+                            label: {
+                                text: '数据中断',
+                                style: {
+                                    color: '#606060'
+                                },
+                                align:'right',
+                                x:50
+                            }
+                        },{ // Light air
+                            from: 0,
+                            to: 1,
+                            color: 'rgba(255, 0, 0, 0.4)',
+                            label: {
+                                text: '差',
+                                style: {
+                                    color: '#606060'
+                                },
+                                align:'right',
+                                x:15
+                            }
+                        },{ // Light air
+                            from: 1,
+                            to: 2,
+                            color: 'rgba(255, 255, 0, 0.4)',
+                            label: {
+                                text: '良',
+                                style: {
+                                    color: '#606060'
+                                },
+                                align:'right',
+                                x:15
+                            }
+                        },{ // Light air
+                            from: 2,
+                            to: 3,
+                            color: 'rgba(0, 255, 0, 0.4)',
+                            label: {
+                                text: '优',
+                                style: {
+                                    color: '#606060'
+                                },
+                                align:'right',
+                                x:15
+                            }
+                        },{ // Light air
+                            from: 3,
+                            to: 4,
+                            color: 'rgba(160,160,160,0.4)',
+                            label: {
+                                text: '关机',
+                                style: {
+                                    color: '#606060'
+                                },
+                                align:'right',
+                                x:25
+                            }
+                        }]
+                    },
+                    legend : {
+                        enabled : false//设置图例不可见
+                    },
+                    series: [{
+                        name: '净化效能',
+                        data: result.efficiency
+                    }]
+                });
+            });
+        }
+    </script>
+</head>
+
+<body>
+
+<div id="win"
+     style="position: relative; left: 0px; top: 50px; margin:auto; width: 620px; height: 480px">
+    <div id="titledrag" class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+                aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">超标异常详情统计 </h4>
+    </div>
+
+    <div class="modal-body">
+        <div style="overflow-y: auto; height: 480px; background: transparent;">
+            <div style="height:50px; background-color:#d8ecf0;display:none;">
+                <div style="float:left; line-height:50px;  height:50px; ">
+                    <form id="searchForm1" class="form-horizontal">
+                        <!-- 2### -->
+                        <input id="reportType" name="reportType" type="hidden"
+                               value="d"> <input id="deviceId"
+                                                 name="deviceId" type="hidden" value=""> <input
+                            id="corpId" name="corpId" type="hidden" value="40282cc55e6e9cd8015e74408e410129">
+                        <input class="form-control" type="text" name="statDate"
+                               style="width: 120px;" value="2019-03-24" /> <input
+                            class="form-control" type="text" name="week"
+                            style="width: 120px;" value="" />
+                    </form>
+                    <button class="btn btn-info" id="searchBtn1">查 询</button>
+                    <button id="btnExport1" class="btn btn-primary"
+                            href="/realbowjc/smoke/report/dischargepurifystat/exportDetail">导 出</button>
+                </div>
+            </div>
+
+            <div id="con" style="clear: left; margin: 10px auto; width:600px;">
+                <ul id="tags">
+                    <li class="selectTag"><a onClick="selectTag('tagContent0',this)" href="javascript:void(0)">表格</a></li>
+                    <li><a onClick="selectTag('tagContent1',this)" href="javascript:void(0)">曲线图表</a></li>
+                </ul>
+                <div id="tagContent">
+                    <!-- 表格列表内容 -->
+                    <div class="tagContenttab selectTag" id="tagContent0">
+                        <div class="menu">
+                            <div class="grid_table">
+                                <table id="list1"></table>
+                                <div id="pager1"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 曲线图表内容 -->
+                    <div class="tagContenttab" id="tagContent1">
+                        <button class="btn btn-primary" title='点击查看平均去除率' onclick="avgMethod('purifyAvg')">去除率</button>
+                        <button class="btn btn-primary" title='点击查看平均浓度' onclick="avgMethod('concAvg')">平均浓度</button>
+                        <button class="btn btn-primary" title='点击查看净化效能' onclick="efficiencyMethod()">净化效能</button>
+                        <div id="container" style="width:580px; height:330px;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        // 3###的选项是你需要修改的
+        $("#list1").jqGrid({
+            colNames : [ '统计日期', '浓度（mg/m³）', '去除率（%）', '净化效能' ], //###数据列名称（数组）
+            colModel : [ //###数据列各参数信息设置
+                {name : 'id.statDate',width : 120,title : false,align : 'center'},
+                {name : 'concAvg',width : 120,title : false,align : 'center'},
+                {name : 'purifyAvg',width : 120,title : false,align : 'center',formatter:function(value, options, rData){
+                        if (value==null)
+                            return "-";
+                        else if(value < 0)
+                            return "-";
+                        return value;
+                    }
+                }, {name : 'efficiency',formatter : efficiencyImg,width : 100,title : false,align : 'center'},
+            ],
+            url : '/realbowjc/smoke/report/dischargepurifystat/getDetailPage', //###修改url
+            sortname : 'id.statDate', //###排序字段名
+            sortorder : "desc", //###排序方式：倒序，本例中设置默认按id倒序排序
+            sortable : true, //可以排序
+            postData : $("#searchForm1").formtojson(),
+            rowNum : 10, //每页显示记录数
+            rowList : [ 10, 20, 30 ], //分页选项，可以下拉选择每页显示记录数
+            pager : '#pager1', //表格数据关联的分页条，html元素
+            autowidth : true, //自动匹配宽度
+            height : 325, //设置高度
+            gridview : true, //加速显示
+            viewrecords : true, //显示总记录数
+            multiselect : false, //可多选，出现多选框
+            repeatitems : false,
+            jsonReader : {
+                root : "content", //json数据模型
+                total : "totalPages", //数据总页码
+                records : "totalElements", //数据总记录数
+                repeatitems : false
+                //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+            },
+            mtype : 'POST',
+            datatype : "json"
+        });
+    </script>
+</div>
+</body>
+</html>

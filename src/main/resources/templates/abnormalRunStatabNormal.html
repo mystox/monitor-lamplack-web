@@ -1,0 +1,334 @@
+
+
+
+
+
+
+
+<!-- 1###-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+    <title>联动比异常</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" ></meta>
+    <!-- required-->
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/jquery-ui-custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/grid.locale-cn.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/jquery.jqGrid.js" type="text/javascript"></script>
+
+    <!-- optional -->
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+
+    <!-- optional 1### -->
+    <script src="/realbowjc/static/lhgcalendar/lhgcalendar.min.js" type="text/javascript"></script>
+
+    <link href="/realbowjc/static/ligerui/css/ligerui-all.css" rel="stylesheet" type="text/css" />
+    <script src="/realbowjc/static/ligerui/ligerui.all.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        //$(window).load({name:'#list'}, RealJs.gridResize120);
+        var row = '20,30,50,100'.split(",");
+        var def = '20';
+
+        function smsTask(ev) {
+            ev.preventDefault();
+            var field = $(this);
+            var corpName = field.attr("corpName");
+            $.ligerDialog.confirm('您确定要给'+corpName+'发送异常通知短信吗?', function(yes) {
+                if (yes) {
+                    var target = field.attr("href");
+                    $.ajax({
+                        type : "POST",
+                        data : {},
+                        url : target,
+                        error : errorHandler,
+                        success : function(msg) {
+                            $.ligerDialog.warn(msg);
+                        }
+                    });
+                }
+            });
+        }
+
+        $(function() {
+            //$(window).resize({name:'#list'}, RealJs.gridResize120);
+            //查询按钮点击事件，提交查询信息同时更新列表
+            $("#searchBtn").click(function(){
+                var diffValue = $("#runDiff").val();  //联动时间差
+                var ratioValue = $("#runRatio").val();//联动比
+                var diffDefaultValue = $("#runDiff").attr('title');
+                var ratioDefaultValue = $("#runRatio").attr('title');
+
+                if(diffValue != diffDefaultValue && isNaN(diffValue)){
+                    $.ligerDialog.warn('联动时间差必须输入整数！');
+                    return;
+                }
+                if(ratioValue != ratioDefaultValue && isNaN(ratioValue)){
+                    $.ligerDialog.warn('联动比必须输入数字！');
+                    return;
+                }
+
+                var form = $("#searchForm");
+                var pageInput = $("#mypage");
+                pageInput.val("true");
+
+                $("#list").jqGrid('setGridParam',{
+                    page:0 });
+
+                $("#list").jqGrid('setGridParam',{
+                    postData: $("#searchForm").formtojson()
+                }).trigger("reloadGrid");
+            });
+
+
+            $("#begingTime").calendar({format : 'yyyy-MM-dd'});
+            $("#endTime").calendar({format : 'yyyy-MM-dd'});
+
+            $("#btnExport").click(function(ev){
+                ev.preventDefault();
+                var target = $(this).attr("href");
+                $("#searchForm").attr("action", target);
+                $("#searchForm").attr("target", "_blank");
+
+                $("#searchForm input").each(function(){
+                    var beginTimeStr = "";
+                    var endTimeStr = "";
+
+                    if(this.name == 'begingTime')
+                    {
+                        beginTimeStr = this.value;
+                    }
+
+                    if(this.name == 'endTime')
+                    {
+                        endTimeStr = this.value;
+                    }
+
+                    RealJs.clearTip(this)
+
+                    if(this.name == 'begingTime')
+                    {
+                        $(this).val(beginTimeStr);
+                    }
+
+                    if(this.name == 'endTime')
+                    {
+                        $(this).val(endTimeStr);
+                    }
+                });
+
+                $("#searchForm").submit();
+
+                $("#searchForm input").each(function(){
+                    RealJs.showTip(this);
+                });
+            });	//导出
+
+        })
+    </script>
+
+    <script type="text/javascript">
+        window.onload=window.onresize= function  _doResize() {
+            var ss = pageSize();
+            $("#list").jqGrid('setGridWidth', ss.WinW-0).jqGrid('setGridHeight', ss.WinH-195);
+        }
+
+        function pageSize() {
+            var winW, winH;
+            if(window.innerHeight) {// all except IE
+                winW = window.innerWidth;
+                winH = window.innerHeight;
+            } else if (document.documentElement && document.documentElement.clientHeight) {// IE 6 Strict Mode
+                winW = document.documentElement.clientWidth;
+                winH = document.documentElement.clientHeight;
+            } else if (document.body) { // other
+                winW = document.body.clientWidth;
+                winH = document.body.clientHeight;
+            }  // for small pages with total size less then the viewport
+            return {WinW:winW, WinH:winH};
+        }
+    </script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $("#btnLianDong").click(function(){
+                $("#ShowLD").stop().slideToggle("slow");
+            });
+        });
+    </script>
+
+</head>
+
+<body>
+<div style="height:100px;" class="iframetop_bg">
+    <div style="float:left;">
+        <form id="searchForm" class="form-horizontal">
+            <input type="hidden" name="abnormal" value="y">
+            <div style="height:50px; line-height:50px;">
+                <label class="queryLabel">查询条件：</label>
+                <input type="text" name="corpCode" style="width:100px; display: none;" class="form-control" title="企业编码" value="企业编码" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <input type="text" name="corpName" style="width:100px;" class="form-control" title="企业名称" value="企业名称" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <label class="queryLabel">所属地区：</label>
+                <input type="text" name="areaName" style="width:100px;" class="form-control" title="所属地区" value="所属地区" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <!-- 新添时间差大于等于查询条件 -->
+                <label style="width:60px; font-family: '微软雅黑'; font-size: 12px; ">　时间差：</label>
+                <select id=" " name="runDiffUnit" class="select-control" style="width:45px;">
+                    <option value="0" >></option>
+                    <option value="1">≥</option>
+                </select>
+                <input id="runDiff" type="text" style="width:68px;" name="diff" class="form-control" title="" value="" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <!-- 新增单位分 -->
+                <label style="width:15px; font-family: '微软雅黑'; font-size: 12px; ">分</label>
+                <!-- 新添联动比率小于等于查询条件 -->
+                <label style="width:72px; font-family: '微软雅黑'; font-size: 12px; ">联动比率：</label>
+                <select id="" name="runRatioUnit" class="select-control" style="width:45px;">
+                    <option value="0"><</option>
+                    <option value="1">≤</option>
+                </select>
+                <input id="runRatio" type="text" style="width:68px" name="ratio" class="form-control" title="" value="" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <!-- 新增单位百分号 -->
+                <label style="width:10px; font-size:12px; font-family: '微软雅黑';">%</label>
+            </div>
+
+            <div style="float:left; height:50px; line-height:50px;">
+                <label class="queryLabel">起止日期：</label>
+                <input id="begingTime" name="begingTime" style="width:120px;" class="date-controldate" readonly=true title="开始时间" value="2019-03-18" />
+                -- <input id="endTime" name="endTime" style="width:120" class="date-controldate" readonly=true title="结束时间" value="2019-03-24" />
+                <label style="width:65px; font-family: '微软雅黑'; font-size: 12px; ">时间格式：</label>
+                <select id="timeType" name="timeType" class="select-control" style="width:50px;">
+                    <option value="d">日</option>
+                    <option value="h">时</option>
+                    <option value="m">分</option>
+                </select>
+            </div>
+        </form>
+        <button style="margin:12px 0px 0px 8px;" class="btn btn-info" id="searchBtn">查 询</button>
+
+        <button style="margin:12px 0px 0px 8px;" id="btnExport" class="btn btn-primary" href="/realbowjc/smoke/abnormal/runstatabnormal/exportExcel">导 出</button>
+
+        <button style="margin:12px 0px 0px 8px;" title="联动比计算公式说明" id="btnLianDong" class="btnLD btnLianDong"></button>
+    </div>
+
+    <!-- <div class="topText" style="margin-top:50px;">
+
+    </div> -->
+</div>
+
+<div class="grid_table">
+    <table id="list"></table>
+    <div id="pager"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+     aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content1"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // 3###的选项是你需要修改的
+    $("#list").jqGrid({
+        colNames:['企业ID','企业编码','监控仪ID','MN', '企业名称', '','净化器名称', '风机名称','净化器运行时间','风机运行时间', '<span title=风机运行时间-净化器运行时间 >时间差</span>', '联动比（%）', '发生日期','操作'], //###数据列名称（数组）
+        colModel:[ 			//###数据列各参数信息设置
+            {name:'corpId',title:true, width:60,sortable:false,align:'center',hidden:true},
+            {name:'corpCode',title:true, width:60,sortable:false,align:'center',hidden:true},
+            {name:'monitorId',title:true, width:60,sortable:false,align:'center',hidden:true},
+            {name:'mn',title:true, width:60,sortable:false,align:'center',hidden:true},
+            {name:'corpName',title:true, width:180,sortable:false,align:'left'},
+            {name:'areaName',id:'areaName', width:120,align:'center',sortable:false},
+            {name:'purifierName', width:100, title:false,sortable:false,align:'center'},
+            {name:'fanName', width:80, title:false,sortable:false,align:'center'},
+            {name:'purifierRun', width:80,
+                formatter: function(value, options, rData){
+                    return timeFormat(value, options, rData);
+                }, title:false,sortable:false,align:'center'},
+            {name:'fanRun', width:80,
+                formatter: function(value, options, rData){
+                    return timeFormat(value, options, rData);
+                }, title:false,sortable:false,align:'center'},
+            {name:'runDiff', width:80,
+                formatter: function(value, options, rData){
+                    return timeFormat(value, options, rData);
+                }, title:false,sortable:false,align:'center'},
+            {name:'runRatio', width:80, title:false,sortable:false,align:'center',formatter:'number',formatoptions:{decimalSeparator:".", decimalPlaces: 2, defaulValue: 0}},
+            {name:'statDate', width:80, title:false,sortable:false,align:'center'},
+            {name:'operate', width:60, align:'center', sortable:false, title:false}
+        ],
+        url:'/realbowjc/smoke/abnormal/runstatabnormal/getPage', 	//###修改url
+        gridComplete: function(){		//###
+            var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+            var corpCodes = $("#list").getCol("corpCode");
+            var corpNames = $("#list").getCol("corpName");
+            var corpIds = $("#list").getCol("corpId");
+            var monitorIds = $("#list").getCol("monitorId");
+            var mns = $("#list").getCol("mn");
+            var statDates = $("#list").getCol("statDate");
+            var runRatios = $("#list").getCol("runRatio");
+
+            for(var i=0;i<ids.length;i++){
+                corp = "<a title='点击查看企业明细' onClick='selectRow(\""+ids[i]+"\")' data-remote='' href='/realbowjc/smoke/info/smokecorp/corpInfo/" + corpCodes[i] + "' data-toggle='modal' data-target='#myModal'>"+corpNames[i]+"</a>";
+                $("#list").jqGrid('setRowData', ids[i], {corpName:corp});
+
+                var badParam = "?statDate="+statDates[i]+"&corpName="+encodeURI(encodeURI(corpNames[i]))+"&corpId="+corpIds[i]+"&monitorId="+monitorIds[i]+"&mn="+mns[i]+"&runRatio="+runRatios[i];
+
+                var badEdit = "<a type='sms' onClick='selectRow(\""+ids[i]+"\")' corpName='"+corpNames[i]+"' href='/realbowjc/smoke/abnormal/runstatabnormal/runStatAbnormaSmsTask" + badParam + "' >异常短信</a>"
+                $("#list").jqGrid('setRowData', ids[i], {operate:badEdit});
+            }
+            $("a[data-target='#myModal']").click(RealJs.openModal);
+            $("a[type='sms']").click(smsTask);
+        },
+        //sortname: 'taskType',  			//###排序字段名
+        //sortorder: "asc", 				//###排序方式：倒序，本例中设置默认按id倒序排序
+        sortable:false,  //可以排序
+        postData: $("#searchForm").formtojson(),
+        rowNum:def, //每页显示记录数
+        rowList:row, //分页选项，可以下拉选择每页显示记录数
+        pager:'#pager',  //表格数据关联的分页条，html元素
+        autowidth: true, //自动匹配宽度
+        height:275,   //设置高度
+        gridview:true, //加速显示
+        viewrecords: true,  //显示总记录数
+        multiselect: false,  //可多选，出现多选框
+        multiselectWidth: 25, //设置多选列宽度
+        repeatitems : false,
+        jsonReader:{
+            root: "content",            //json数据模型
+            total:"totalPages",             //数据总页码
+            records: "totalElements",       //数据总记录数
+            repeatitems : false //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+        },
+        mtype: 'POST',
+        datatype: "json",
+        loadComplete:RealJs.gridOnload
+    });
+
+    $("#list").jqGrid('setGroupHeaders', {
+        useColSpanStyle: true,
+        groupHeaders:[
+            {startColumnName: 'runDiff', numberOfColumns: 2, titleText: '异常情况'}
+        ]
+    });
+</script>
+
+<div id="ShowLD" style="display:none; border-radius: 8px; height:128px; background:white; position: relative; z-index:999999; border: 2px solid #3fa1cf; width: 158px; top: -35px; left: 598px; font-size: 12px;">
+    <ul style="list-style:none; padding:0px; margin: 10px;">
+        <li style="font-size:12px; font-weight: bold;">联动比计算公式说明：</li>
+        <li style="margin-top:8px;">时间差=风机运行时间-净化器运行时间</li>
+        <li style="margin-top:8px;">联动比=净化器运行时间/风机运行时间*100%</li>
+    </ul>
+</div>
+</body>
+</html>

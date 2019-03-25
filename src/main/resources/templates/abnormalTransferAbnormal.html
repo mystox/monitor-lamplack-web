@@ -1,0 +1,257 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <title>广州正虹环境信息系统5.0版</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"></meta>
+
+    <!-- required-->
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/jquery-ui-custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/grid.locale-cn.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/jquery.jqGrid.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/windowsize120.js" type="text/javascript"></script>
+    <!-- optional -->
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/lhgcalendar/lhgcalendar.min.js" type="text/javascript"></script>
+
+    <link href="/realbowjc/static/ligerui/css/ligerui-all.css" rel="stylesheet" type="text/css" />
+    <script src="/realbowjc/static/ligerui/ligerui.all.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        var row = '20,30,50,100'.split(",");
+        var def = '20';
+
+        function smsTask(ev) {
+            ev.preventDefault();
+            var field = $(this);
+            var corpName = field.attr("corpName");
+            $.ligerDialog.confirm('您确定要给'+corpName+'发送异常通知短信吗?', function(yes) {
+                if (yes) {
+                    var target = field.attr("href");
+                    $.ajax({
+                        type : "POST",
+                        data : {},
+                        url : target,
+                        error : errorHandler,
+                        success : function(msg) {
+                            $.ligerDialog.warn(msg);
+                        }
+                    });
+                }
+            });
+        }
+
+        $(function() {
+            $("#beginTimeStr").calendar({
+                format : 'yyyy-MM-dd'
+            });
+            $("#endTimeStr").calendar({
+                format : 'yyyy-MM-dd'
+            });
+
+            //$("#searchBtn").click(RealJs.clickSelectBtn);
+
+            $("#searchBtn").click(function(){
+                var abdays = $("#abnormalDays").val();  //异常连续差天数
+
+                var defaultValue = $("#abnormalDays").attr('title');
+
+                if(abdays != defaultValue && isNaN(abdays)){
+                    $.ligerDialog.warn('异常连续差天数必须输入整数！');
+                    return;
+                }
+
+                var form = $("#searchForm");
+                var pageInput = $("#mypage");
+                pageInput.val("true");
+
+                $("#list").jqGrid('setGridParam',{
+                    page:0 });
+
+                $("#list").jqGrid('setGridParam',{
+                    postData: $("#searchForm").formtojson()
+                }).trigger("reloadGrid");
+            });
+
+            $("#btnExport").click(function(ev){
+                ev.preventDefault();
+                var target1 = $(this).attr("href");
+                $("#searchForm").attr("action", target1);
+                $("#searchForm").attr("target", "_blank");
+
+                var corpName = $("#corpName").val();
+                $("#corpName").val("");
+                $("#searchForm").submit();
+                $("#corpName").val(corpName);
+            });	//导出
+        });
+    </script>
+    <style type="text/css">
+        .labelText {
+            margin-left: 2px;
+            font-size: 12px;
+            font-family: '微软雅黑';
+        }
+    </style>
+</head>
+
+<body>
+<div style="height: 50px;" class="iframetop_bg">
+    <div style="float: left; line-height: 50px; height: 50px;">
+        <form id="searchForm" class="form-horizontal" method="post">
+            <label class="queryLabel">查询条件：</label>
+            <input id="corpCode" name="corpCode" class="form-control" style="width:100px; display: none;" title="企业编码" value="" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+            <input id="corpName" name="corpName" class="form-control" style="width:100px;" title="企业名称" value="企业名称" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+
+            <!--
+            <select title="运营状态" class="select-control">
+                <option value="">--运营状态--</option>
+                <option value="close">停止营业</option><option value="decorate">装修中</option><option value="open">正常营业</option><option value="relocate">搬迁</option>
+            </select>
+            -->
+            <!-- 				<label class="queryLabel" style="width:135px;" >异常连续天数&gt;=</label> -->
+            <!-- 				<input name="abnormalDays" class="form-control" title="0" value="0" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" style="width:40px;" /> -->
+            <!-- 				<span style="font-size:12px;">天</span> -->
+            <!-- <label class="labelText" style="width: 64px;">起止日期：</label> -->
+            <input type="text" id="beginTimeStr" name="beginTimeStr" value="2019-03-18" class="date-controldate" style="width:100px;" readonly=true/> --
+            <input type="text" id="endTimeStr" name="endTimeStr" value="2019-03-24" class="date-controldate" style="width:100px;" readonly=true/>
+        </form>
+        <button class="btn btn-info" id="searchBtn">查 询</button>
+    </div>
+
+    <div class="topText">
+
+        <button id="btnExport" class="btn btn-primary" href="/realbowjc/smoke/abnormal/transferabnormal/exportExcel">导 出</button>
+
+    </div>
+
+
+</div>
+
+<div class="grid_table">
+    <table id="list"></table>
+    <div id="pager"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content1"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    jQuery(document).ready(function() {
+        $.jgrid.defaults = $.extend($.jgrid.defaults, {
+            loadui : "enable"
+        });
+    });
+    $("#list").jqGrid({
+        url : '/realbowjc/smoke/abnormal/transferabnormal/page', //请求数据的url地址
+        mtype : 'POST',
+        datatype : "json", //请求的数据类型
+        colNames : [ '企业ID','企业编码', '企业名称', '','监控仪ID','监控仪名称','MN','异常日期', '连续异常天数', '接收数据份数','操作' ], //数据列名称（数组）
+        colModel : [ //数据列各参数信息设置
+            {name : 'smokeMonitor.smokeCorp.id',index:'smokeMonitor.smokeCorp.id',editable:true,width:80,title:true,hidden:true},
+            {name : 'smokeMonitor.smokeCorp.corpCode',index:'smokeMonitor.smokeCorp.corpCode',editable:true,width:80,title:true,hidden:true},
+            {name : 'smokeMonitor.smokeCorp.corpName',index:'smokeMonitor.smokeCorp.corpName',width:180,title:true,align:'left'},
+            {name : 'smokeMonitor.smokeCorp.area.areaName',index:'smokeMonitor.smokeCorp.area.areaName',width:120,title:true,align:'center'},
+            {name : 'smokeMonitor.id',index:'smokeMonitor.id',editable:true,width:80,title:true,hidden:true},
+            {name : 'smokeMonitor.monitorName',index:'smokeMonitor.monitorName',align:'center'},
+            {name : 'smokeMonitor.mn',index:'smokeMonitor.mn',align:'center'},
+            {name : 'daysRange',index:'daysRange',width : 125,align : 'center',sortable:false
+                /*
+                ,formatter : function(value,
+                        options, rData) {
+                    var timestamp = "";
+                    if (!isNaN(rData.monitorTime)
+                            && rData.monitorTime) {//rData[7]表示日期列
+                        timestamp = (new Date(
+                                parseFloat(rData.monitorTime)))
+                                .format("yyyy-MM-dd");
+                    }
+                    return timestamp;
+                }
+                */
+            },
+            {name : 'abnormalDays',index : 'abnormalDays',width : 80,hidden: true,align : 'center'},
+            {name : 'dataAmount',index : 'dataAmount',width : 80,hidden: true,align : 'center'},
+            {name:'operate', width:60, align:'center', sortable:false, title:false}
+        ],
+
+        gridComplete: function(){
+            //###修改操作按钮
+            var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+            var corpCodes = $("#list").getCol("smokeMonitor.smokeCorp.corpCode");
+            var corpNames = $("#list").getCol("smokeMonitor.smokeCorp.corpName");
+            var corpIds = $("#list").getCol("smokeMonitor.smokeCorp.id");
+            var monitorIds = $("#list").getCol("smokeMonitor.id");
+            var mns = $("#list").getCol("smokeMonitor.mn");
+            var abnormalDays = $("#list").getCol("abnormalDays");
+            var dataAmounts = $("#list").getCol("dataAmount");
+            var daysRanges = $("#list").getCol("daysRange");
+
+            var param = "?beginDate=" + $("#beginTimeStr").val() + "&endDate=" + $("#endTimeStr").val();
+            for(var i=0;i<ids.length;i++){
+                var badParam = "?statDate="+daysRanges[i]+"&corpName="+encodeURI(encodeURI(corpNames[i]))+"&corpId="+corpIds[i]+"&monitorId="+monitorIds[i]+"&mn="+mns[i]+"&dataAmount="+dataAmounts[i]+"&abnormalDays="+abnormalDays[i];
+
+                var badEdit = "<a type='sms' onClick='selectRow(\""+ids[i]+"\")' corpName='"+corpNames[i]+"' href='/realbowjc/smoke/abnormal/transferabnormal/transferAbnormaSmsTask" + badParam + "' >异常短信</a>"
+
+                detail = "<a data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/abnormal/transferabnormal/detail/" + ids[i] + param + "' data-toggle='modal' data-target='#myModal'>详情</a>"
+                detail = badEdit+"  "+detail;
+                $("#list").jqGrid('setRowData', ids[i], {operate:detail});
+
+
+                //设置告警
+                if (abnormalDays[i]>=3){
+                    var img = '<img src="/realbowjc/static/realbow/images/yujing_blue1.png" width="45" height="45" style="vertical-align: center;" />'
+                    $("#list").jqGrid('setRowData', ids[i], {warn:img});
+                }
+
+                corp = "<a title='点击查看企业明细' onClick='selectRow(\""+ids[i]+"\")' data-remote='' href='/realbowjc/smoke/info/smokecorp/corpInfo/" + corpCodes[i] + "' data-toggle='modal' data-target='#myModal'>"+corpNames[i]+"</a>";
+                $("#list").jqGrid('setRowData', ids[i], {'smokeMonitor.smokeCorp.corpName':corp});
+            }
+            $("a[data-target='#myModal']").click(RealJs.openModal);
+            $("a[type='sms']").click(smsTask);
+        },
+        postData : $("#searchForm")
+            .formtojson(),
+        mtype : 'POST',
+        rowNum:def, //每页显示记录数
+        rowList:row, //分页选项，可以下拉选择每页显示记录数
+        pager : '#pager', //表格数据关联的分页条，html元素
+        autowidth : true, //自动匹配宽度
+        height : 360, //设置高度
+        gridview : true, //加速显示
+        viewrecords : true, //显示总记录数
+        multiselect : false, //可多选，出现多选框
+        multiselectWidth : 25, //设置多选列宽度
+        repeatitems : false,
+        sortable : true, //可以排序
+        sortname : 'id', //排序字段名
+        sortorder : "desc", //排序方式：倒序，本例中设置默认按id倒序排序
+        jsonReader : {
+            root : "content", //json数据模型
+            total : "totalPages", //数据总页码
+            records : "totalElements", //数据总记录数
+            repeatitems : false
+            //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+        },
+        loadComplete : function(data) { //完成服务器请求后，回调函数
+
+        }
+    });
+</script>
+
+</body>
+</html>

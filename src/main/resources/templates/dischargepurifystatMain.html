@@ -1,0 +1,517 @@
+
+
+
+
+
+
+
+
+<!-- 1###-->
+
+
+
+
+
+<html>
+<head>
+    <title>排放量及净化效能统计报表 </title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" ></meta>
+    <!-- required-->
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/jquery-ui-custom.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/ui.jqgrid.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/bootstrapV3.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="/realbowjc/static/realbow/css/iframeStyle.css" />
+    <script src="/realbowjc/static/jquery/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/jquery/jquery-migrate-1.2.1.min.js"></script>
+    <script src="/realbowjc/static/realbow/js/bootstrap-modal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/grid.locale-cn.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/jquery.jqGrid.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/date/WdatePicker.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/Hightcharts/highcharts.js"></script>
+    <!-- optional -->
+    <script src="/realbowjc/static/realbow/js/real.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dragmodal.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/formtojson.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/realbow/js/dateformat.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/lhgcalendar/lhgcalendar.min.js" type="text/javascript"></script>
+
+    <link href="/realbowjc/static/ligerui/css/ligerui-all.css" rel="stylesheet" type="text/css" />
+
+    <script src="/realbowjc/static/ligerui/core/base.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerDrag.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerDialog.js" type="text/javascript"></script>
+    <script src="/realbowjc/static/ligerui/ligerResizable.js" type="text/javascript"></script>
+    <script>
+        var reportType='d';
+        window.onload = window.onresize = function _doResize() {
+            var ss = pageSize();
+            $("#list").jqGrid('setGridWidth', ss.WinW - 0).jqGrid('setGridHeight', ss.WinH - 195);
+        }
+
+        function pageSize() {
+            var winW, winH;
+            if (window.innerHeight) { // all except IE
+                winW = window.innerWidth;
+                winH = window.innerHeight;
+            } else if (document.documentElement && document.documentElement.clientHeight) { // IE 6 Strict Mode
+                winW = document.documentElement.clientWidth;
+                winH = document.documentElement.clientHeight;
+            } else if (document.body) { // other
+                winW = document.body.clientWidth;
+                winH = document.body.clientHeight;
+            } // for small pages with total size less then the viewport
+            return {
+                WinW: winW,
+                WinH: winH
+            };
+        }
+
+        function smsTask(ev) {
+            ev.preventDefault();
+            var field = $(this);
+            var corpName = field.attr("corpName");
+            $.ligerDialog.confirm('您确定要给'+corpName+'发送异常通知短信吗?', function(yes) {
+                if (yes) {
+                    var target = field.attr("href");
+                    $.ajax({
+                        type : "POST",
+                        data : {},
+                        url : target,
+                        error : errorHandler,
+                        success : function(msg) {
+                            $.ligerDialog.warn(msg);
+                        }
+                    });
+                }
+            });
+        }
+
+        $(function() {
+            var datefmt ='yyyy-MM-dd';
+            var maxdate ='%y-%M-{%d-1}';
+
+            $("#statDate").focus(function(){
+                WdatePicker({skin:'whyGreen',dateFmt: datefmt,maxDate:maxdate,isShowWeek:true});
+            });
+
+
+            changGridColModel(reportType);
+            $("#searchBtn").click(RealJs.clickSelectBtn);
+
+            $("#reportType").change(function(){
+                reportType =$(this).children('option:selected').val();
+                $(this).val(reportType);
+                changeWdatePick(reportType);
+                changGridColModel(reportType);
+            });
+            function changeWdatePick(reportType){
+                var dates ="2019-03-24";
+                $('#week').hide();
+                if(reportType=='d'){
+                    datefmt ='yyyy-MM-dd';
+                    maxdate ='%y-%M-{%d-1}';
+                    $("#statDate").val(dates);
+                }else if(reportType=='w'){
+                    datefmt ='yyyy';
+                    maxdate ='%y';
+                    $('#week').show();
+                    $("#statDate").val(dates.substring(0,4));
+                }else if(reportType=='m'){
+                    datefmt="yyyy-MM";
+                    maxdate = "%y-{%M}";
+                    $("#statDate").val(dates.substring(0,7));
+                }else if(reportType=='y'){
+                    datefmt="yyyy";
+                    maxdate = "{%y}";
+                    $("#statDate").val(dates.substring(0,4));
+                }
+            }
+
+            $("#btnExport").click(function(ev){
+                var reportType =$("#reportType").val();
+                ev.preventDefault();
+                var url = "dischargeperiodstat/exportTotal";
+                if(reportType=='d'){
+                    url = "dischargepurifystat/exportTotal";
+                }
+
+                var target = $(this).attr("href")+"/"+url+"?reportType="+reportType;
+                $("#searchForm").attr("action", target);
+                $("#searchForm").attr("target", "_blank");
+
+                $("#searchForm").clearDefaultValue();
+                $("#searchForm").submit();
+                $("#searchForm").resetDefaultValue();
+            });	//导出
+
+        });
+
+    </script>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<div style="height:100px;" class="iframetop_bg">
+    <div style="float:left; ">
+        <form id="searchForm" class="form-horizontal" method="post">
+            <!-- 2### -->
+            <div style="height:50px; line-height:50px;">
+                <label class="queryLabel">查询条件：</label>
+                <select id="reportType" class="select-control" style="width:65px;">
+                    <option value="d">日报</option>
+                    <option value="w">周报</option>
+                    <option value="m">月报</option>
+                    <option value="y">年报</option>
+                </select>
+                <input type="text" name="corpCode" class="form-control" style="display: none;" title="企业编码" value="企业编码" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <input type="text" name="corpName" class="form-control" title="监测点名称" value="监测点名称" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <input type="text" name="address" class="form-control" title="企业地址" value="企业地址" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+                <input type="text" name="areaName" class="form-control" title="" value="" onfocus="RealJs.clearTip(this)" onblur="RealJs.showTip(this)" />
+
+                <!-- <select id="period" name="period" class="select-control" style="width:90px;">
+                    <option value="-1">排放浓度</option>
+                    <option value="-2">正常</option>
+                    <option value="1">超标</option>
+                    <option value="2">严重</option>
+                </select> -->
+                <!-- 去除率小于等于查询条件-->
+                <label style="width:58px; font-family: '微软雅黑'; font-size: 12px; ">去除率：</label>
+                <select id="purifyUnit" name="purifyUnit" class="select-control" style="width:45px;">
+                    <option value="0"><</option>
+                    <option value="1">≤</option>
+                </select>
+                <input type="text" id="purify" name="purify" class="form-control" style="width:45px;"/>
+                <label style="width:10px; font-size:12px; font-family: '微软雅黑';">%</label>
+            </div>
+
+            <div style="float:left; height:50px; line-height:50px;">
+                <label class="queryLabel">日期：</label>
+                <input class="form-control" type="text" id="statDate" name="statDate" style="width: 112px;" placeholder="请您选择日期" value="2019-03-24" />
+                <select id="week"  name="week" class="select-control" style="width:75px;display: none">
+
+                    <option value="1">第1周</option>
+
+                    <option value="2">第2周</option>
+
+                    <option value="3">第3周</option>
+
+                    <option value="4">第4周</option>
+
+                    <option value="5">第5周</option>
+
+                    <option value="6">第6周</option>
+
+                    <option value="7">第7周</option>
+
+                    <option value="8">第8周</option>
+
+                    <option value="9">第9周</option>
+
+                    <option value="10">第10周</option>
+
+                    <option value="11">第11周</option>
+
+                    <option value="12">第12周</option>
+
+                    <option value="13">第13周</option>
+
+                    <option value="14">第14周</option>
+
+                    <option value="15">第15周</option>
+
+                    <option value="16">第16周</option>
+
+                    <option value="17">第17周</option>
+
+                    <option value="18">第18周</option>
+
+                    <option value="19">第19周</option>
+
+                    <option value="20">第20周</option>
+
+                    <option value="21">第21周</option>
+
+                    <option value="22">第22周</option>
+
+                    <option value="23">第23周</option>
+
+                    <option value="24">第24周</option>
+
+                    <option value="25">第25周</option>
+
+                    <option value="26">第26周</option>
+
+                    <option value="27">第27周</option>
+
+                    <option value="28">第28周</option>
+
+                    <option value="29">第29周</option>
+
+                    <option value="30">第30周</option>
+
+                    <option value="31">第31周</option>
+
+                    <option value="32">第32周</option>
+
+                    <option value="33">第33周</option>
+
+                    <option value="34">第34周</option>
+
+                    <option value="35">第35周</option>
+
+                    <option value="36">第36周</option>
+
+                    <option value="37">第37周</option>
+
+                    <option value="38">第38周</option>
+
+                    <option value="39">第39周</option>
+
+                    <option value="40">第40周</option>
+
+                    <option value="41">第41周</option>
+
+                    <option value="42">第42周</option>
+
+                    <option value="43">第43周</option>
+
+                    <option value="44">第44周</option>
+
+                    <option value="45">第45周</option>
+
+                    <option value="46">第46周</option>
+
+                    <option value="47">第47周</option>
+
+                    <option value="48">第48周</option>
+
+                    <option value="49">第49周</option>
+
+                    <option value="50">第50周</option>
+
+                    <option value="51">第51周</option>
+
+                    <option value="52">第52周</option>
+
+                    <option value="53">第53周</option>
+
+                </select>
+            </div>
+        </form>
+        <button style="margin:12px 0px 0px 8px;" class="btn btn-info" id="searchBtn">查 询</button>
+        <button style="margin:12px 0px 0px 8px;" id="btnExport" class="btn btn-primary" href="/realbowjc/smoke/report">导 出</button>
+    </div>
+    <div class="topText" style="margin-top:50px;">
+
+    </div>
+</div>
+
+
+<div class="grid_table" id="date1">
+    <table id="list"></table>
+    <div id="pager"></div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
+     aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content1"></div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    jQuery(document).ready(function() {
+        $.jgrid.defaults = $.extend($.jgrid.defaults, {
+            loadui: "enable"
+        });
+    })
+
+    function efficiencyImg(value, options, rData){
+        if (value=='1good')
+            return '<img src="/realbowjc/static/realbow/images/helpIcon/greenface0.png">';
+        else if (value=='2general')
+            return '<img src="/realbowjc/static/realbow/images/helpIcon/yellowface0.png">';
+        else if (value=='3bad')
+            return '<img src="/realbowjc/static/realbow/images/helpIcon/redface0.png">';
+        else if (value=='6break')
+            return '<img src="/realbowjc/static/realbow/images/helpIcon/dataZD0.png">';
+        else
+            return '<img src="/realbowjc/static/realbow/images/helpIcon/greyface.png">';
+    }
+
+    function purify(value, options, rData){
+        if (value==null)
+            return "-";
+        else if(value < 0)
+            return "-";
+        return value;
+    }
+
+    var jqGridDefaultConfig={
+        gridComplete: function(){		//###修改操作按钮
+            var ids = $("#list").getDataIDs();//jqGrid('getDataIDs');
+            var detailUrl='/realbowjc/smoke/report/dischargeperiodstat/detail/';
+            if(reportType == 'd'){
+                detailUrl='/realbowjc/smoke/report/dischargepurifystat/detail/';
+            }
+            var corpNames = $("#list").getCol("corpName");
+            var corpCodes = $("#list").getCol("corpCode");
+            var corpIds = $("#list").getCol("corpId");
+            var monitorIds = $("#list").getCol("monitorId");
+            var mns = $("#list").getCol("mn");
+            var concAvgs = $("#list").getCol("concAvg");
+            if(reportType != 'd'){
+                var seriousDays = $("#list").getCol("seriousDays");
+                var abnormalDays = $("#list").getCol("abnormalDays");
+            }
+            var param = "?reportType=" + $("#reportType").val();
+            var param = param + "&statDate=" + $("#statDate").val() + "&week=" + $("#week").val();
+            for(var i=0;i<ids.length;i++){
+                var edit = "<a data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='"+ detailUrl + ids[i] + param + "' data-toggle='modal' data-target='#myModal'>详情</a>";
+                if(reportType == 'd'){
+                    edit = "<a data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='"+ detailUrl + corpIds[i] + param + "' data-toggle='modal' data-target='#myModal'>详情</a>";
+                }
+                if(reportType == 'd'){
+                    var badParam = param+"&corpName="+encodeURI(encodeURI(corpNames[i]))+"&corpId="+corpIds[i]+"&monitorId="+monitorIds[i]+"&mn="+mns[i]+"&concAvg="+concAvgs[i];
+                    var badEdit = "<a type='sms' onClick='selectRow(\""+ids[i]+"\")' corpName='"+corpNames[i]+"' href='/realbowjc/smoke/report/dischargepurifystat/badSmsTask" + badParam + "' >异常短信</a>"
+                }else{
+                    if(seriousDays[i]+abnormalDays[i]>0){
+                        var badParam = param+"&corpName="+encodeURI(encodeURI(corpNames[i]))+"&corpId="+corpIds[i]+"&monitorId="+monitorIds[i]+"&mn="+mns[i]+"&concAvg="+concAvgs[i]+"&seriousDays="+seriousDays[i]+"&abnormalDays="+abnormalDays[i];
+                        var badEdit = "<a type='sms' onClick='selectRow(\""+ids[i]+"\")' corpName='"+corpNames[i]+"' href='/realbowjc/smoke/report/dischargeperiodstat/badSmsTask" + badParam + "' >异常短信</a>"
+                    }else{
+                        var badEdit = "异常短信";
+                    }
+                }
+                operateStr = badEdit+"  "+edit;
+                $("#list").jqGrid('setRowData', ids[i],{operate:operateStr});
+                var corp = "<a title='点击查看企业明细' data-remote='' onClick='selectRow(\""+ids[i]+"\")' href='/realbowjc/smoke/info/smokecorp/corpInfo/" + corpCodes[i] + "' data-toggle='modal' data-target='#myModal'>"+corpNames[i]+"</a>";
+                $("#list").jqGrid('setRowData', ids[i], {'corpName':corp});
+            }
+            $("a[data-target='#myModal']").click(RealJs.openModal);
+            $("a[type='sms']").click(smsTask);
+        },
+        rowNum: 10, //每页显示记录数
+        postData: $("#searchForm").formtojson(),
+        rowList: [10, 20, 30], //分页选项，可以下拉选择每页显示记录数
+        pager: '#pager', //表格数据关联的分页条，html元素
+        autowidth: true, //自动匹配宽度
+        height: 360, //设置高度
+        gridview: true, //加速显示
+        viewrecords: true, //显示总记录数
+        multiselect: false, //可多选，出现多选框
+        multiselectWidth: 25, //设置多选列宽度
+        repeatitems: false,
+        sortable: true, //可以排序
+        sortname: 'id', //排序字段名
+        sortorder: "desc", //排序方式：倒序，本例中设置默认按id倒序排序
+        jsonReader:{
+            root: "content",            //json数据模型
+            total:"totalPages",             //数据总页码
+            records: "totalElements",       //数据总记录数
+            repeatitems : false //false表示返回的数据中各字段不必严格遵守colModel中设置的顺序，只要名称正确就可以。
+        },
+        mtype: 'POST',
+        datatype: "json",
+        loadComplete:RealJs.gridOnload
+    };
+
+    function changGridColModel(type){
+        jqGridDefaultConfig.postData = $("#searchForm").formtojson();
+        if(type=='d'){
+            jqGridDefaultConfig.url='/realbowjc/smoke/report/dischargepurifystat/getPurifyPage';
+            jqGridDefaultConfig.colNames=['企业ID','编号','监控仪ID','MN','监测点名称','企业地址','','净化器名称','油烟浓度日平均值（mg/m³）','去除率平均值（%）','操 作']; //数据列名称（数组）
+            jqGridDefaultConfig.colModel=[ //数据列各参数信息设置
+                {name:'corpId',index:'corpId', editable:true, width:50,align:'center', title:false,hidden:true,hidedlg:true},
+                {name:'corpCode',index:'corpCode', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'monitorId',index:'monitorId', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'mn',index:'mn', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'corpName',index:'corpName', width:120, title:true,align:'left'},
+                {name:'address',index:'address', width:120, title:true,align:'left'},
+                {name:'areaName',index:'areaName', width:50, title:false,align:'center'},
+                {name:'deviceName',index:'deviceName', width:100, title:true,align:'center'},
+                {name:'concAvg',index:'concAvg', width:100,align:'center'},
+                {name:'purifyAvg',index:'purifyAvg', width:80,align:'center',formatter:purify},
+                {name:'operate', width:50, align:'center', sortable:false, title:false,resizable:false}
+            ];
+        }else if(type=='w'){
+            jqGridDefaultConfig.url='/realbowjc/smoke/report/dischargeperiodstat/getPeriodPage?reportType=w';
+            jqGridDefaultConfig.colNames=['企业ID','监控仪ID','MN','编号','监测点名称','企业地址','','净化器名称','油烟浓度周平均值（mg/m³）','去除率平均值（%）','正常','超标','严重超标','操 作']; //数据列名称（数组）
+            jqGridDefaultConfig.colModel=[ //数据列各参数信息设置
+                {name:'corpId',index:'corpId', editable:true, width:50,align:'center', title:false,hidden:true,hidedlg:true},
+                {name:'monitorId',index:'monitorId', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'mn',index:'mn', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'corpCode',index:'corpCode', editable:true, width:50,align:'center', title:false, hidden:true},
+                {name:'corpName',index:'corpName', width:120, title:true,align:'left'},
+                {name:'address',index:'address', width:120, title:true,align:'left'},
+                {name:'areaName',index:'areaName', width:50, title:false,align:'center'},
+                {name:'deviceName',index:'deviceName', width:100, title:true,align:'center'},
+                {name:'concAvg',index:'concAvg', width:100,align:'center'},
+                {name:'purifyAvg',index:'purifyAvg', width:80,align:'center',formatter:purify},
+                {name:'normalDays',index:'normalDays', width:50,align:'center'},
+                {name:'abnormalDays',index:'abnormalDays', width:50,align:'center'},
+                {name:'seriousDays',index:'seriousDays', width:50,align:'center'},
+                {name:'operate', width:50, align:'center', sortable:false, title:false,resizable:false}
+            ];
+        }else if(type=='m'){
+            jqGridDefaultConfig.url='/realbowjc/smoke/report/dischargeperiodstat/getPeriodPage?reportType=m';
+            jqGridDefaultConfig.colNames=['企业ID','监控仪ID','MN','编号','监测点名称','企业地址','','净化器名称','油烟浓度月平均值（mg/m³）','去除率平均值（%）','正常','超标','严重超标','操 作']; //数据列名称（数组）
+            jqGridDefaultConfig.colModel=[ //数据列各参数信息设置
+                {name:'corpId',index:'corpId', editable:true, width:50,align:'center', title:false,hidden:true,hidedlg:true},
+                {name:'monitorId',index:'monitorId', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'mn',index:'mn', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'corpCode',index:'corpCode', editable:true, width:50,align:'center', title:false, hidden:true},
+                {name:'corpName',index:'corpName', width:120, title:true,align:'left'},
+                {name:'address',index:'address', width:120, title:false,align:'left'},
+                {name:'areaName',index:'areaName', width:50, title:true,align:'center'},
+                {name:'deviceName',index:'deviceName', width:100, title:true,align:'center'},
+                {name:'concAvg',index:'concAvg', width:100,align:'center'},
+                {name:'purifyAvg',index:'purifyAvg', width:80,align:'center',formatter:purify},
+                {name:'normalDays',index:'normalDays', width:50,align:'center'},
+                {name:'abnormalDays',index:'abnormalDays', width:50,align:'center'},
+                {name:'seriousDays',index:'seriousDays', width:50,align:'center'},
+                {name:'operate', width:50, align:'center', sortable:false, title:false,resizable:false}
+            ];
+        }else if(type=='y'){
+            jqGridDefaultConfig.url='/realbowjc/smoke/report/dischargeperiodstat/getPeriodPage?reportType=y';
+            jqGridDefaultConfig.colNames=['企业ID','监控仪ID','MN','编号','监测点名称','企业地址','','净化器名称','油烟浓度年平均值（mg/m³）','去除率平均值（%）','正常','超标','严重超标','操 作']; //数据列名称（数组）
+            jqGridDefaultConfig.colModel=[ //数据列各参数信息设置
+                {name:'corpId',index:'corpId', editable:true, width:50,align:'center', title:false,hidden:true,hidedlg:true},
+                {name:'monitorId',index:'monitorId', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'mn',index:'mn', editable:true, width:50,align:'center', title:false, hidden:true,hidedlg:true},
+                {name:'corpCode',index:'corpCode', editable:true, width:50,align:'center', title:false, hidden:true},
+                {name:'corpName',index:'corpName', width:120, title:true,align:'left'},
+                {name:'address',index:'address', width:120, title:false,align:'left'},
+                {name:'areaName',index:'areaName', width:50, title:true,align:'center'},
+                {name:'deviceName',index:'deviceName', width:100, title:true,align:'center'},
+                {name:'concAvg',index:'concAvg', width:100,align:'center'},
+                {name:'purifyAvg',index:'purifyAvg', width:80,align:'center',formatter:purify},
+                {name:'normalDays',index:'normalDays', width:50,align:'center'},
+                {name:'abnormalDays',index:'abnormalDays', width:50,align:'center'},
+                {name:'seriousDays',index:'seriousDays', width:50,align:'center'},
+                {name:'operate', width:50, align:'center', sortable:false, title:false,resizable:false}
+            ];
+        }
+
+        $('#list').GridUnload(); //重新加载表头
+        $('#list').jqGrid(jqGridDefaultConfig).trigger("reloadGrid");
+
+        if(type!='d'){
+            $("#list").jqGrid('setGroupHeaders', {
+                useColSpanStyle: true,
+                groupHeaders:[
+                    {startColumnName: 'normalDays', numberOfColumns: 3, titleText: '排放浓度（天）'}
+                ]
+            });
+        }
+
+
+        var aa = pageSize();
+        $("#list").jqGrid('setGridWidth', aa.WinW - 0).jqGrid('setGridHeight', aa.WinH - 195);
+
+    }
+
+</script>
+
+</body>
+</html>
